@@ -15,7 +15,6 @@ mod RussianStarkletteDeployer {
     use starknet::contract_address_to_felt252;
     use starknet::class_hash_to_felt252;
     use starknet::OptionTrait;
-    use debug::PrintTrait;
     use cairo_1_russian_roulette::game::RussianStarklette;
     use cairo_1_russian_roulette::game::IRussianStarklette;
     use cairo_1_russian_roulette::game::IRussianStarkletteDispatcher;
@@ -26,7 +25,8 @@ mod RussianStarkletteDeployer {
         game_id: u128,
         game_contract_hash: ClassHash,
         game_owners: LegacyMap<ContractAddress, ContractAddress>,
-        game_status: LegacyMap<felt252, List<ContractAddress>>
+        game_status: LegacyMap<felt252, List<ContractAddress>>,
+        player_balance: LegacyMap<ContractAddress, u128>  
     }
 
     #[constructor]
@@ -54,7 +54,6 @@ mod RussianStarkletteDeployer {
             self.game_status.write('NOT_STARTED', game_status_list);
             self.game_id.write(self.game_id.read()+1);
             let to_print = contract_address_to_felt252(new_game_address);
-            to_print.print();
             new_game_address
         }
     }
