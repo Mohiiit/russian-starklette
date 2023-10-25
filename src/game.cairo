@@ -28,16 +28,18 @@ mod RussianStarklette {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, caller_address: felt252, id: felt252) {
-        let id: u128 = id.try_into().unwrap();
-        let owner = contract_address_try_from_felt252(caller_address).unwrap();
-        self.game_owner.write(owner);
+    fn constructor(ref self: ContractState, id: u128) {
+        let caller_address: ContractAddress = get_caller_address();
+        self.game_id.write(id);
+        // let owner = contract_address_try_from_felt252(caller_address).unwrap();
+        self.game_owner.write(caller_address);
         self.game_status.write('NOT_STARTED');
     }
 
     #[external(v0)]
     impl RussianStarklette of super::IRussianStarklette<ContractState> {
         fn start_game(ref self: ContractState) -> bool {
+            // add owner only validation here
             let current_state = self.game_status.read();
             if (current_state != 'NOT_STARTED') {
                 return false;
@@ -47,6 +49,7 @@ mod RussianStarklette {
         }
         fn place_bet(ref self: ContractState, bet_number: u128, bet_amount: u128) -> bool {
             let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
+            // add validation to check the balance
             self.bets_detail.write(caller_address, (bet_number, bet_amount));
             true
         }
@@ -61,6 +64,7 @@ mod RussianStarklette {
         }
         fn update_bet_amount(ref self: ContractState, bet_amount: u128) -> bool {
             let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
+            // here too check the balance of the player
             let (current_bet_number, current_bet_amount) = self.bets_detail.read(caller_address);
             if (current_bet_number == 0 ){
                 return false;
@@ -69,6 +73,9 @@ mod RussianStarklette {
             true
         }
         fn end_game(self: @ContractState) -> bool {
+            // owner only validation
+            // generate a random number
+            // update the balance of the players
             let mut unsafe_state = RussianStarkletteDeployer::unsafe_new_contract_state();
 
             true
