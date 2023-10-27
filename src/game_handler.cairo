@@ -4,7 +4,7 @@ use super::game::RussianStarklette;
 
 #[starknet::interface]
 trait IRussianStarkletteDeployer<TContractState> {
-    fn new_game(ref self: TContractState ) ->  ContractAddress;
+    fn new_game(ref self: TContractState, caller_address: ContractAddress ) ->  ContractAddress;
     fn get_owner(self: @TContractState, game_contract_address: ContractAddress) -> ContractAddress;
     fn get_game_id(self: @TContractState) -> u128;
 }
@@ -42,11 +42,13 @@ mod RussianStarkletteDeployer {
     #[external(v0)]
     impl RussianStarkletteDeployer of super::IRussianStarkletteDeployer<ContractState>{
         
-        fn new_game(ref self: ContractState) ->  ContractAddress{
-            let caller_address: ContractAddress = get_caller_address();
+        fn new_game(ref self: ContractState, caller_address: ContractAddress) ->  ContractAddress{
+            // let caller_address: ContractAddress = get_caller_address();
             let game_id = self.game_id.read();
             let mut calldata = ArrayTrait::new();
             game_id.serialize(ref calldata);
+            let felt252_caller_address = contract_address_to_felt252(caller_address);
+            felt252_caller_address.print();
             let (new_game_address, _) = deploy_syscall(
                 self.game_contract_hash.read(), 0, calldata.span(), false
             )
@@ -57,8 +59,8 @@ mod RussianStarkletteDeployer {
             self.game_status.write('NOT_STARTED', game_status_list);
             let current_game_id = self.game_id.read();
             self.game_id.write(current_game_id+1);
-            // let current_game_id = self.game_id.read();
-            // current_game_id.print();
+            let current_game_id = self.game_id.read();
+            current_game_id.print();
             new_game_address
         }
 

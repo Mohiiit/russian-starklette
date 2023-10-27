@@ -32,13 +32,16 @@ fn deploy_contract() -> IRussianStarkletteDeployerDispatcher {
 #[test]
 #[available_gas(2000000)]
 fn test_new_game() {
+    
     let caller_address: ContractAddress = PLAYER_ONE();
     let dispatcher = deploy_contract();
-    let deployed_game_address = dispatcher.new_game();
     let state = STATE();
-    let current_game_id = state.game_id.read();
-    current_game_id.print();
+    let deployed_game_address = dispatcher.new_game(caller_address);
+    
+    
     let mut unsafe_state = RussianStarkletteDeployer::unsafe_new_contract_state();
-    assert(unsafe_state.game_owners.read(deployed_game_address) ==PLAYER_ONE(), 'issue here');
+    let current_game_id = unsafe_state.game_id.read();
+    current_game_id.print();
+    assert(unsafe_state.game_owners.read(deployed_game_address) == PLAYER_ONE(), 'issue here');
     // assert(state.game_id.read()==1, 'it should be one');
 }
