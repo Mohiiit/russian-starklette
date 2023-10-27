@@ -43,35 +43,50 @@ mod RussianStarkletteDeployer {
     impl RussianStarkletteDeployer of super::IRussianStarkletteDeployer<ContractState>{
         
         fn new_game(ref self: ContractState, caller_address: ContractAddress) ->  ContractAddress{
-            // let caller_address: ContractAddress = get_caller_address();
-            let game_id = self.game_id.read();
-            let mut calldata = ArrayTrait::new();
-            game_id.serialize(ref calldata);
-            let felt252_caller_address = contract_address_to_felt252(caller_address);
-            felt252_caller_address.print();
-            let (new_game_address, _) = deploy_syscall(
-                self.game_contract_hash.read(), 0, calldata.span(), false
-            )
-            .expect('failed to deploy counter');
-            self.game_owners.write(new_game_address, caller_address);
-            let mut game_status_list: List<ContractAddress> = self.game_status.read('NOT_STARTED');
-            game_status_list.append(new_game_address);
-            self.game_status.write('NOT_STARTED', game_status_list);
-            let current_game_id = self.game_id.read();
-            self.game_id.write(current_game_id+1);
-            let current_game_id = self.game_id.read();
-            current_game_id.print();
+            let new_game_address = self._deploy_new_game();
+            self._set_game_id();
+            self._set_game_owner(new_game_address, caller_address);
+            self._update_game_status('NOT_STARTED', new_game_address);
             new_game_address
         }
 
         fn get_owner(self: @ContractState, game_contract_address: ContractAddress) -> ContractAddress {
-            let response = self.game_owners.read(game_contract_address);
-            let to_print = contract_address_to_felt252(response);
-            response
+            self._get_game_owner(game_contract_address)
         }
 
         fn get_game_id(self: @ContractState) -> u128 {
+            self._get_game_id()
+        }
+    }
+
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        fn _get_game_id(self: @ContractState) -> u128 {
             self.game_id.read()
+        }
+        fn _set_game_id(ref self: ContractState) {
+            let current_game_id = self.game_id.read();
+            self.game_id.write(current_game_id+1);
+        }
+        fn _get_game_owner(self: @ContractState, game_contract_address: ContractAddress) -> ContractAddress {
+            self.game_owners.read(game_contract_address)
+        }
+        fn _set_game_owner(ref self: ContractState, game_contract_address: ContractAddress, caller_address: ContractAddress) {
+            self.game_owners.write(game_contract_address, caller_address);
+        }
+        fn _update_game_status(ref self: ContractState, game_status: felt252, game_contract_address: ContractAddress) {
+            let mut game_status_list: List<ContractAddress> = self.game_status.read(game_status);
+            game_status_list.append(game_contract_address);
+            self.game_status.write(game_status, game_status_list);
+        }
+        fn _deploy_new_game(ref self: ContractState) -> ContractAddress {
+            let game_id = self.game_id.read();
+            let mut calldata = array![game_id.into()];
+            let (new_game_address, _) = deploy_syscall(
+                self.game_contract_hash.read(), 0, calldata.span(), false
+            )
+            .expect('failed to deploy counter');
+            new_game_address
         }
     }
 

@@ -1,9 +1,10 @@
-// use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::game_owners::InternalContractMemberStateTrait;
-use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::{game_ownersContractMemberStateTrait, game_idContractMemberStateTrait};
+use core::option::OptionTrait;
+use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::InternalTrait;
+use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::{game_ownersContractMemberStateTrait, game_idContractMemberStateTrait, game_contract_hashContractMemberStateTrait};
 
 use starknet::syscalls::deploy_syscall;
 use starknet::Felt252TryIntoContractAddress;
-use starknet::{ContractAddress, get_caller_address,get_execution_info, ClassHash};
+use starknet::{ContractAddress, get_caller_address,get_execution_info, ClassHash, class_hash_try_from_felt252};
 use debug::PrintTrait;
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer;
 use cairo_1_russian_roulette::game_handler::IRussianStarkletteDeployerDispatcher;
@@ -11,9 +12,6 @@ use cairo_1_russian_roulette::game_handler::IRussianStarkletteDeployerDispatcher
 use cairo_1_russian_roulette::game::RussianStarklette;
 use cairo_1_russian_roulette::tests::constants::{OWNER, PLAYER_ONE, PLAYER_TWO, OTHER_OWNER, GAME_CLASS_HASH};
 
-fn STATE() -> RussianStarkletteDeployer::ContractState {
-    RussianStarkletteDeployer::contract_state_for_testing()
-}
 
 fn deploy_contract() -> IRussianStarkletteDeployerDispatcher {
     
@@ -29,19 +27,23 @@ fn deploy_contract() -> IRussianStarkletteDeployerDispatcher {
     contract0
 }
 
+fn STATE() -> RussianStarkletteDeployer::ContractState {
+    RussianStarkletteDeployer::contract_state_for_testing()
+}
+
 #[test]
 #[available_gas(2000000)]
 fn test_new_game() {
-    
     let caller_address: ContractAddress = PLAYER_ONE();
-    let dispatcher = deploy_contract();
-    let state = STATE();
-    let deployed_game_address = dispatcher.new_game(caller_address);
+    let mut state = STATE();
+    let class_hash = class_hash_try_from_felt252(RussianStarklette::TEST_CLASS_HASH).unwrap();
+    state.game_contract_hash.write(class_hash);
+
+    let new_game_address = state._deploy_new_game();
+    state._set_game_id();
+    state._set_game_owner(new_game_address, caller_address);
+    state._update_game_status('NOT_STARTED', new_game_address);
     
-    
-    let mut unsafe_state = RussianStarkletteDeployer::unsafe_new_contract_state();
-    let current_game_id = unsafe_state.game_id.read();
-    current_game_id.print();
-    assert(unsafe_state.game_owners.read(deployed_game_address) == PLAYER_ONE(), 'issue here');
-    // assert(state.game_id.read()==1, 'it should be one');
+    assert(state.game_id.read() == 1, 'it should be one');
+    assert(state.game_owners.read(new_game_address)==PLAYER_ONE(), 'caller should be the owner');
 }
