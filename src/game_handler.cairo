@@ -1,12 +1,12 @@
 use starknet::{ContractAddress, ClassHash};
-use alexandria_storage::list::{List, ListTrait};
-use super::game::RussianStarklette;
 
 #[starknet::interface]
 trait IRussianStarkletteDeployer<TContractState> {
     fn new_game(ref self: TContractState, caller_address: ContractAddress ) ->  ContractAddress;
     fn get_owner(self: @TContractState, game_contract_address: ContractAddress) -> ContractAddress;
     fn get_game_id(self: @TContractState) -> u128;
+    fn update_player_balance(ref self: TContractState, player_contract_address: ContractAddress, amount: u128);
+    fn get_player_balance(self: @TContractState, player_contract_address: ContractAddress) -> u128;
 }
 
 #[starknet::contract]
@@ -14,16 +14,10 @@ mod RussianStarkletteDeployer {
     use starknet::{ContractAddress, get_caller_address,get_execution_info, ClassHash};
     use alexandria_storage::list::{List, ListTrait};
     use starknet::syscalls::deploy_syscall;
-    use starknet::contract_address_to_felt252;
-    use starknet::class_hash_to_felt252;
-    use starknet::OptionTrait;
-    use debug::PrintTrait;
     use cairo_1_russian_roulette::game::RussianStarklette;
     use cairo_1_russian_roulette::game::IRussianStarklette;
     use cairo_1_russian_roulette::game::IRussianStarkletteDispatcher;
-    use starknet::class_hash_try_from_felt252;
     
-
     #[storage]
     struct Storage {
         game_id: u128,
@@ -57,6 +51,13 @@ mod RussianStarkletteDeployer {
         fn get_game_id(self: @ContractState) -> u128 {
             self._get_game_id()
         }
+
+        fn update_player_balance(ref self: ContractState, player_contract_address: ContractAddress, amount: u128) {
+            
+        }
+        fn get_player_balance(self: @ContractState, player_contract_address: ContractAddress) -> u128 {
+            self._get_player_balance(player_contract_address)
+        }
     }
 
     #[generate_trait]
@@ -79,6 +80,21 @@ mod RussianStarkletteDeployer {
             game_status_list.append(game_contract_address);
             self.game_status.write(game_status, game_status_list);
         }
+        fn _get_player_balance(self: @ContractState, player_contract_address: ContractAddress) -> u128 {
+            self.player_balance.read(player_contract_address)
+        }
+        fn _increase_player_balance(ref self: ContractState, player_contract_address: ContractAddress, amount: u128) {
+            let player_current_balance = self.player_balance.read(player_contract_address);
+            self.player_balance.write(player_contract_address, amount+player_current_balance);
+        }
+        fn _decrease_player_balance(ref self: ContractState, player_contract_address: ContractAddress, amount: u128) {
+            let player_current_balance = self.player_balance.read(player_contract_address);
+            if(amount>=player_current_balance) {
+                self.player_balance.write(player_contract_address, 0);
+            } else {
+                self.player_balance.write(player_contract_address, player_current_balance-amount);
+            }
+        }
         fn _deploy_new_game(ref self: ContractState) -> ContractAddress {
             let game_id = self.game_id.read();
             let mut calldata = array![game_id.into()];
@@ -89,5 +105,4 @@ mod RussianStarkletteDeployer {
             new_game_address
         }
     }
-
 }

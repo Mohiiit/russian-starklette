@@ -1,4 +1,3 @@
-use core::option::OptionTrait;
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::InternalTrait;
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::{game_ownersContractMemberStateTrait, game_idContractMemberStateTrait, game_contract_hashContractMemberStateTrait};
 
@@ -9,6 +8,7 @@ use debug::PrintTrait;
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer;
 use cairo_1_russian_roulette::game_handler::IRussianStarkletteDeployerDispatcher;
 use cairo_1_russian_roulette::game_handler::IRussianStarkletteDeployerDispatcherTrait;
+use cairo_1_russian_roulette::game_handler::IRussianStarkletteDeployer;
 use cairo_1_russian_roulette::game::RussianStarklette;
 use cairo_1_russian_roulette::tests::constants::{OWNER, PLAYER_ONE, PLAYER_TWO, OTHER_OWNER, GAME_CLASS_HASH};
 
