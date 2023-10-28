@@ -21,7 +21,9 @@ fn OTHER_OWNER() -> ContractAddress {
 }
 
 fn GAME_CLASS_HASH() -> ClassHash {
-    let game_class_hash = class_hash_const::<0x02f45ad52642c593a9c21d6b84b6f29984b50c53f9ed2b01b34d1b1526ca88a5>();
+    let game_class_hash = class_hash_const::<
+        0x02f45ad52642c593a9c21d6b84b6f29984b50c53f9ed2b01b34d1b1526ca88a5
+    >();
     let game_class_hash_felt252 = class_hash_to_felt252(game_class_hash);
     game_class_hash
 }
