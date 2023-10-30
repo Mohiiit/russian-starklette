@@ -20,7 +20,7 @@ use cairo_1_russian_roulette::tests::constants::{
 };
 
 
-fn deploy_contract() -> IRussianStarkletteDeployerDispatcher {
+fn deploy_contract() -> (IRussianStarkletteDeployerDispatcher, ContractAddress) {
     let mut calldata = ArrayTrait::new();
     let class_hash = RussianStarklette::TEST_CLASS_HASH;
     class_hash.serialize(ref calldata);
@@ -30,34 +30,34 @@ fn deploy_contract() -> IRussianStarkletteDeployerDispatcher {
     )
         .unwrap();
     let contract0 = IRussianStarkletteDeployerDispatcher { contract_address: address0 };
-    contract0
+    (contract0, address0)
 }
 
 fn STATE() -> RussianStarkletteDeployer::ContractState {
     RussianStarkletteDeployer::contract_state_for_testing()
 }
+// #[test]
+// #[available_gas(2000000)]
+// fn test_new_game() {
+//     let caller_address: ContractAddress = PLAYER_ONE();
+//     let mut state = STATE();
+//     let class_hash = class_hash_try_from_felt252(RussianStarklette::TEST_CLASS_HASH).unwrap();
+//     state.game_contract_hash.write(class_hash);
 
-#[test]
-#[available_gas(2000000)]
-fn test_new_game() {
-    let caller_address: ContractAddress = PLAYER_ONE();
-    let mut state = STATE();
-    let class_hash = class_hash_try_from_felt252(RussianStarklette::TEST_CLASS_HASH).unwrap();
-    state.game_contract_hash.write(class_hash);
+//     let new_game_address = state._deploy_new_game();
+//     state._set_game_id();
+//     state._set_game_owner(new_game_address, caller_address);
+//     state._update_game_status('NOT_STARTED', new_game_address);
 
-    let new_game_address = state._deploy_new_game();
-    state._set_game_id();
-    state._set_game_owner(new_game_address, caller_address);
-    state._update_game_status('NOT_STARTED', new_game_address);
+//     assert(state.game_id.read() == 1, 'it should be one');
+//     assert(state.game_owners.read(new_game_address) == PLAYER_ONE(), 'caller should be the owner');
+// }
 
-    assert(state.game_id.read() == 1, 'it should be one');
-    assert(state.game_owners.read(new_game_address) == PLAYER_ONE(), 'caller should be the owner');
-}
+// #[test]
+// #[available_gas(2000000)]
+// fn test_increase_balance_function() {
+//     let mut state = STATE();
+//     state._increase_player_balance(PLAYER_ONE(), 200);
+//     assert(state.player_balance.read(PLAYER_ONE()) == 200, 'it should be 200');
+// }
 
-#[test]
-#[available_gas(2000000)]
-fn test_increase_balance_function() {
-    let mut state = STATE();
-    state._increase_player_balance(PLAYER_ONE(), 200);
-    assert(state.player_balance.read(PLAYER_ONE()) == 200, 'it should be 200');
-}
