@@ -1,10 +1,16 @@
 use starknet::ContractAddress;
 use alexandria_storage::list::{List, ListTrait};
+use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer;
 
 #[starknet::interface]
 trait IRussianStarklette<TContractState> {
     fn start_game(ref self: TContractState) -> bool;
-    fn place_bet(ref self: TContractState, caller_address:ContractAddress, bet_number: u128, bet_amount: u128) -> bool;
+    fn place_bet(
+        ref self: TContractState,
+        caller_address: ContractAddress,
+        bet_number: u128,
+        bet_amount: u128
+    ) -> bool;
     fn update_bet_number(ref self: TContractState, bet_number: u128) -> bool;
     fn update_bet_amount(ref self: TContractState, bet_amount: u128) -> bool;
     fn end_game(self: @TContractState) -> bool;
@@ -12,10 +18,13 @@ trait IRussianStarklette<TContractState> {
 
 #[starknet::contract]
 mod RussianStarklette {
+    use cairo_1_russian_roulette::game_handler::IRussianStarkletteDeployerDispatcherTrait;
+    use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::InternalTrait;
     use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::{
         game_ownersContractMemberStateTrait, game_contract_hashContractMemberStateTrait,
         player_balanceContractMemberStateTrait
     };
+    use cairo_1_russian_roulette::game_handler::IRussianStarkletteDeployerDispatcher;
     use starknet::{ContractAddress, get_caller_address, get_execution_info};
     use alexandria_storage::list::{List, ListTrait};
     use starknet::contract_address_try_from_felt252;
@@ -32,11 +41,12 @@ mod RussianStarklette {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, id: u128) {
+    fn constructor(ref self: ContractState, id: u128, game_handler_address: ContractAddress) {
         let caller_address: ContractAddress = get_caller_address();
         self.game_id.write(id);
         self.game_owner.write(caller_address);
         self.game_status.write('NOT_STARTED');
+        self.game_handler_address.write(game_handler_address);
     }
 
     #[external(v0)]
@@ -51,9 +61,17 @@ mod RussianStarklette {
             self.game_status.write('ONGOING');
             true
         }
-        fn place_bet(ref self: ContractState, caller_address:ContractAddress , bet_number: u128, bet_amount: u128) -> bool {
-            let game_handler_state = RussianStarkletteDeployer::unsafe_new_contract_state();
-            let player_current_balance = game_handler_state.player_balance.read(caller_address);
+        fn place_bet(
+            ref self: ContractState,
+            caller_address: ContractAddress,
+            bet_number: u128,
+            bet_amount: u128
+        ) -> bool {
+            let game_handler = IRussianStarkletteDeployerDispatcher {
+                contract_address: self.game_handler_address.read()
+            };
+            // let game_handler_state = game_handler.;
+            let player_current_balance = game_handler.get_player_balance(caller_address);
             assert(bet_amount <= player_current_balance, 'not enough balace');
             self.bets_detail.write(caller_address, (bet_number, bet_amount));
             true
