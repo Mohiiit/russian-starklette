@@ -44,7 +44,7 @@ fn STATE() -> RussianStarkletteDeployer::ContractState {
 //     let class_hash = class_hash_try_from_felt252(RussianStarklette::TEST_CLASS_HASH).unwrap();
 //     state.game_contract_hash.write(class_hash);
 
-//     let new_game_address = state._deploy_new_game();
+//     let new_game_address = state._deploy_new_game(OTHER_OWNER());
 //     state._set_game_id();
 //     state._set_game_owner(new_game_address, caller_address);
 //     state._update_game_status('NOT_STARTED', new_game_address);

@@ -22,13 +22,14 @@ trait IRussianStarkletteDeployer<TContractState> {
 mod RussianStarkletteDeployer {
     use starknet::{
         ContractAddress, get_caller_address, get_execution_info, ClassHash, SyscallResultTrait,
-        StorageAddress
+        StorageAddress, contract_address_to_felt252
     };
     use alexandria_storage::list::{List, ListTrait};
     use starknet::syscalls::deploy_syscall;
     use cairo_1_russian_roulette::game::RussianStarklette;
     use cairo_1_russian_roulette::game::IRussianStarklette;
     use cairo_1_russian_roulette::game::IRussianStarkletteDispatcher;
+    use debug::PrintTrait;
 
 
     #[storage]
@@ -54,7 +55,7 @@ mod RussianStarkletteDeployer {
             caller_address: ContractAddress,
             game_handler_address: ContractAddress
         ) -> ContractAddress {
-            let new_game_address = self._deploy_new_game(game_handler_address);
+            let new_game_address = self._deploy_new_game(caller_address, game_handler_address);
             self._set_game_id();
             self._set_game_owner(new_game_address, caller_address);
             self._update_game_status('NOT_STARTED', new_game_address);
@@ -74,12 +75,18 @@ mod RussianStarkletteDeployer {
         fn increase_player_balance(
             ref self: ContractState, player_contract_address: ContractAddress, amount: u128
         ) {
+            let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
+            let felt_address = contract_address_to_felt252(caller_address);
+            felt_address.print();
+            // assert(player_contract_address==caller_address, 'only player can update');
             self._increase_player_balance(player_contract_address, amount);
         }
 
         fn decrease_player_balance(
             ref self: ContractState, player_contract_address: ContractAddress, amount: u128
         ) {
+            let caller_address: ContractAddress = get_caller_address();
+            assert(player_contract_address==caller_address, 'only player can update');
             self._decrease_player_balance(player_contract_address, amount);
         }
 
@@ -140,10 +147,10 @@ mod RussianStarkletteDeployer {
             }
         }
         fn _deploy_new_game(
-            ref self: ContractState, game_handler_address: ContractAddress
+            ref self: ContractState, caller_address: ContractAddress, game_handler_address: ContractAddress
         ) -> ContractAddress {
             let game_id = self.game_id.read();
-            let mut calldata = array![game_id.into(), game_handler_address.into()];
+            let mut calldata = array![game_id.into(), caller_address.into(), game_handler_address.into()];
             let (new_game_address, _) = deploy_syscall(
                 self.game_contract_hash.read(), 0, calldata.span(), false
             )

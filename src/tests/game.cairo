@@ -5,6 +5,7 @@ use starknet::syscalls::deploy_syscall;
 use starknet::{
     ContractAddress, get_caller_address, get_execution_info, ClassHash, class_hash_try_from_felt252
 };
+use starknet::testing::{set_caller_address, set_contract_address};
 use cairo_1_russian_roulette::game::RussianStarklette;
 use cairo_1_russian_roulette::game::IRussianStarkletteDispatcher;
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer;
@@ -39,12 +40,26 @@ fn GAME_HANDLER_STATE() -> RussianStarkletteDeployer::ContractState {
 #[test]
 #[available_gas(2000000)]
 fn test_placing_bets() {
+    set_caller_address(PLAYER_ONE());
+    set_contract_address(PLAYER_ONE());
     let (game_handler, game_address) = deploy_contract();
     let new_game_address = game_handler.new_game(PLAYER_ONE(), game_address);
-    game_handler.increase_player_balance(PLAYER_ONE(), 200);
+
+    set_caller_address(PLAYER_TWO());
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
 
     let game_dispacther = IRussianStarkletteDispatcher { contract_address: new_game_address };
-    let contract_response = game_dispacther.place_bet(PLAYER_ONE(), 2, 200);
+    let current_owner = game_dispacther.get_game_owner();
+    assert(current_owner==PLAYER_ONE(), 'one should be owner');
+
+    set_caller_address(PLAYER_ONE());
+    set_contract_address(PLAYER_ONE());
+    let start_game = game_dispacther.start_game();
+
+    set_caller_address(PLAYER_TWO());
+    set_contract_address(PLAYER_TWO());
+    let contract_response = game_dispacther.place_bet(PLAYER_TWO(), 2, 200);
 
     assert(contract_response, 'issue in placing bet');
 }
