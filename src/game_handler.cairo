@@ -6,7 +6,7 @@ trait IRussianStarkletteDeployer<TContractState> {
         ref self: TContractState,
         caller_address: ContractAddress,
         game_handler_address: ContractAddress
-    ) -> ContractAddress;
+    );
     fn get_all_games(self: @TContractState) -> Array<ContractAddress>;
     fn get_game_id(self: @TContractState) -> u128;
     fn increase_player_balance(
@@ -31,7 +31,6 @@ mod RussianStarkletteDeployer {
     use cairo_1_russian_roulette::game::IRussianStarkletteDispatcher;
     use debug::PrintTrait;
 
-
     #[storage]
     struct Storage {
         game_id: u128,
@@ -40,11 +39,32 @@ mod RussianStarkletteDeployer {
         games: List<ContractAddress>
     }
 
-
     #[constructor]
     fn constructor(ref self: ContractState, class_hash: ClassHash) {
         self.game_id.write(0);
         self.game_contract_hash.write(class_hash);
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        GameCreated: GameCreated,
+        BalanceUpdated: BalanceUpdated
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct GameCreated {
+        #[key]
+        game_address: ContractAddress,
+        owner_address: ContractAddress,
+        game_id: u128
+    }
+    #[derive(Drop, starknet::Event)]
+    struct BalanceUpdated {
+        #[key]
+        player: ContractAddress,
+        old_balance: u128,
+        new_balance: u128
     }
 
     #[external(v0)]
@@ -53,11 +73,11 @@ mod RussianStarkletteDeployer {
             ref self: ContractState,
             caller_address: ContractAddress,
             game_handler_address: ContractAddress
-        ) -> ContractAddress {
+        ) {
             let new_game_address = self._deploy_new_game(caller_address, game_handler_address);
             self._set_game_id();
             self._add_to_games(new_game_address);
-            new_game_address
+            self.emit(GameCreated {game_address: new_game_address, owner_address: caller_address, game_id: self.game_id.read()});
         }
 
         fn get_all_games(self: @ContractState) -> Array<ContractAddress> {
@@ -72,10 +92,11 @@ mod RussianStarkletteDeployer {
             ref self: ContractState, player_contract_address: ContractAddress, amount: u128
         ) {
             let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
-            let felt_address = contract_address_to_felt252(caller_address);
-            felt_address.print();
             assert(player_contract_address==caller_address, 'only player can update');
+            let player_old_balance = self.player_balance.read(player_contract_address);
             self._increase_player_balance(player_contract_address, amount);
+            let player_new_balance = self.player_balance.read(player_contract_address);
+            self.emit(BalanceUpdated{player: player_contract_address, old_balance: player_old_balance, new_balance: player_new_balance})
         }
 
         fn decrease_player_balance(
@@ -83,7 +104,10 @@ mod RussianStarkletteDeployer {
         ) {
             let caller_address: ContractAddress = get_caller_address();
             assert(player_contract_address==caller_address, 'only player can update');
+            let player_old_balance = self.player_balance.read(player_contract_address);
             self._decrease_player_balance(player_contract_address, amount);
+            let player_new_balance = self.player_balance.read(player_contract_address);
+            self.emit(BalanceUpdated{player: player_contract_address, old_balance: player_old_balance, new_balance: player_new_balance})
         }
 
         fn get_player_balance(
