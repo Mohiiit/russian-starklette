@@ -51,6 +51,18 @@ const Home = () => {
         await get_player_balance();
     }
 
+    const create_new_game = async() => {
+        const myCall = currentContract.populate("new_game", ['0x517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973','0x0789b13e94a7c8c95d2471f4f257b18672171eb55b9f86aaf4db944593be3479']);
+        const res = await currentContract.new_game(myCall.calldata);
+        const res2 = await provider.waitForTransaction(res.transaction_hash); 
+        console.log(res, res2);
+    }
+
+    const get_owner = async() => {
+        const response = await currentContract.get_owner();
+        console.log('owner-> ',response);
+    }
+
     useEffect(() => {
         first_thing();
     }, []);
@@ -62,6 +74,9 @@ const Home = () => {
             </button>
             <button onClick={decrease_player_balance}>
                 Decrease player balance
+            </button>
+            <button onClick={create_new_game}>
+                Create New Game
             </button>
             <div>
                 Here is the balance {balance}

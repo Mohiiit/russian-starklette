@@ -7,7 +7,7 @@ trait IRussianStarkletteDeployer<TContractState> {
         caller_address: ContractAddress,
         game_handler_address: ContractAddress
     ) -> ContractAddress;
-    fn get_owner(self: @TContractState, game_contract_address: ContractAddress) -> ContractAddress;
+    fn get_all_games(self: @TContractState) -> Array<ContractAddress>;
     fn get_game_id(self: @TContractState) -> u128;
     fn increase_player_balance(
         ref self: TContractState, player_contract_address: ContractAddress, amount: u128
@@ -36,9 +36,8 @@ mod RussianStarkletteDeployer {
     struct Storage {
         game_id: u128,
         game_contract_hash: ClassHash,
-        game_owners: LegacyMap<ContractAddress, ContractAddress>,
-        game_status: LegacyMap<felt252, List<ContractAddress>>,
-        player_balance: LegacyMap<ContractAddress, u128>
+        player_balance: LegacyMap<ContractAddress, u128>,
+        games: List<ContractAddress>
     }
 
 
@@ -57,15 +56,12 @@ mod RussianStarkletteDeployer {
         ) -> ContractAddress {
             let new_game_address = self._deploy_new_game(caller_address, game_handler_address);
             self._set_game_id();
-            self._set_game_owner(new_game_address, caller_address);
-            self._update_game_status('NOT_STARTED', new_game_address);
+            self._add_to_games(new_game_address);
             new_game_address
         }
 
-        fn get_owner(
-            self: @ContractState, game_contract_address: ContractAddress
-        ) -> ContractAddress {
-            self._get_game_owner(game_contract_address)
+        fn get_all_games(self: @ContractState) -> Array<ContractAddress> {
+            self._get_all_games()
         }
 
         fn get_game_id(self: @ContractState) -> u128 {
@@ -78,7 +74,7 @@ mod RussianStarkletteDeployer {
             let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
             let felt_address = contract_address_to_felt252(caller_address);
             felt_address.print();
-            // assert(player_contract_address==caller_address, 'only player can update');
+            assert(player_contract_address==caller_address, 'only player can update');
             self._increase_player_balance(player_contract_address, amount);
         }
 
@@ -106,24 +102,10 @@ mod RussianStarkletteDeployer {
             let current_game_id = self.game_id.read();
             self.game_id.write(current_game_id + 1);
         }
-        fn _get_game_owner(
-            self: @ContractState, game_contract_address: ContractAddress
-        ) -> ContractAddress {
-            self.game_owners.read(game_contract_address)
-        }
-        fn _set_game_owner(
-            ref self: ContractState,
-            game_contract_address: ContractAddress,
-            caller_address: ContractAddress
-        ) {
-            self.game_owners.write(game_contract_address, caller_address);
-        }
-        fn _update_game_status(
-            ref self: ContractState, game_status: felt252, game_contract_address: ContractAddress
-        ) {
-            let mut game_status_list: List<ContractAddress> = self.game_status.read(game_status);
-            game_status_list.append(game_contract_address);
-            self.game_status.write(game_status, game_status_list);
+        fn _get_all_games(self: @ContractState) -> Array<ContractAddress> {
+            let games_list: List<ContractAddress> = self.games.read();
+            let games_array: Array<ContractAddress> = games_list.array();
+            games_array
         }
         fn _get_player_balance(
             self: @ContractState, player_contract_address: ContractAddress
@@ -145,6 +127,11 @@ mod RussianStarkletteDeployer {
             } else {
                 self.player_balance.write(player_contract_address, player_current_balance - amount);
             }
+        }
+        fn _add_to_games(ref self: ContractState, new_game_address: ContractAddress) {
+            let mut games = self.games.read();
+            games.append(new_game_address);
+            self.games.write(games);
         }
         fn _deploy_new_game(
             ref self: ContractState, caller_address: ContractAddress, game_handler_address: ContractAddress
