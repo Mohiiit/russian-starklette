@@ -25,6 +25,7 @@ mod RussianStarkletteDeployer {
         StorageAddress, contract_address_to_felt252
     };
     use alexandria_storage::list::{List, ListTrait};
+    use alexandria_data_structures::array_ext::ArrayTraitExt;
     use starknet::syscalls::deploy_syscall;
     use cairo_1_russian_roulette::game::RussianStarklette;
     use cairo_1_russian_roulette::game::IRussianStarklette;
@@ -92,7 +93,7 @@ mod RussianStarkletteDeployer {
             ref self: ContractState, player_contract_address: ContractAddress, amount: u128
         ) {
             let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
-            assert(player_contract_address==caller_address, 'only player can update');
+            assert(player_contract_address==caller_address || self._check_address_in_games(player_contract_address), 'only player can update');
             let player_old_balance = self.player_balance.read(player_contract_address);
             self._increase_player_balance(player_contract_address, amount);
             let player_new_balance = self.player_balance.read(player_contract_address);
@@ -103,7 +104,7 @@ mod RussianStarkletteDeployer {
             ref self: ContractState, player_contract_address: ContractAddress, amount: u128
         ) {
             let caller_address: ContractAddress = get_caller_address();
-            assert(player_contract_address==caller_address, 'only player can update');
+            assert(player_contract_address==caller_address || self._check_address_in_games(player_contract_address), 'only player can update');
             let player_old_balance = self.player_balance.read(player_contract_address);
             self._decrease_player_balance(player_contract_address, amount);
             let player_new_balance = self.player_balance.read(player_contract_address);
@@ -151,6 +152,16 @@ mod RussianStarkletteDeployer {
             } else {
                 self.player_balance.write(player_contract_address, player_current_balance - amount);
             }
+        }
+        fn _check_address_in_games(self: @ContractState, game_address: ContractAddress) -> bool {
+            let all_games_list: List<ContractAddress> = self.games.read();
+            let all_games_array: Array<ContractAddress> = all_games_list.array();
+            let current_game_index = all_games_array.index_of(game_address);
+
+            if (current_game_index.is_some()) {
+                return true;
+            }
+            false
         }
         fn _add_to_games(ref self: ContractState, new_game_address: ContractAddress) {
             let mut games = self.games.read();
