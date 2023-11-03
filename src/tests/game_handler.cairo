@@ -1,6 +1,6 @@
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::InternalTrait;
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::{
-    game_ownersContractMemberStateTrait, game_idContractMemberStateTrait,
+     game_idContractMemberStateTrait,
     game_contract_hashContractMemberStateTrait, player_balanceContractMemberStateTrait
 };
 

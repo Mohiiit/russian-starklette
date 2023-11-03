@@ -75,8 +75,8 @@ mod RussianStarkletteDeployer {
             caller_address: ContractAddress,
             game_handler_address: ContractAddress
         ) {
-            let new_game_address = self._deploy_new_game(caller_address, game_handler_address);
             self._set_game_id();
+            let new_game_address = self._deploy_new_game(caller_address, game_handler_address);
             self._add_to_games(new_game_address);
             self.emit(GameCreated {game_address: new_game_address, owner_address: caller_address, game_id: self.game_id.read()});
         }
@@ -93,7 +93,9 @@ mod RussianStarkletteDeployer {
             ref self: ContractState, player_contract_address: ContractAddress, amount: u128
         ) {
             let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
-            assert(player_contract_address==caller_address || self._check_address_in_games(player_contract_address), 'only player can update');
+            caller_address.print();
+            player_contract_address.print();
+            assert(player_contract_address==caller_address || self._check_address_in_games(caller_address), 'only player can update');
             let player_old_balance = self.player_balance.read(player_contract_address);
             self._increase_player_balance(player_contract_address, amount);
             let player_new_balance = self.player_balance.read(player_contract_address);
@@ -104,7 +106,9 @@ mod RussianStarkletteDeployer {
             ref self: ContractState, player_contract_address: ContractAddress, amount: u128
         ) {
             let caller_address: ContractAddress = get_caller_address();
-            assert(player_contract_address==caller_address || self._check_address_in_games(player_contract_address), 'only player can update');
+            caller_address.print();
+            player_contract_address.print();
+            assert(player_contract_address==caller_address || self._check_address_in_games(caller_address), 'only player can update');
             let player_old_balance = self.player_balance.read(player_contract_address);
             self._decrease_player_balance(player_contract_address, amount);
             let player_new_balance = self.player_balance.read(player_contract_address);

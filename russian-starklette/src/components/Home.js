@@ -8,6 +8,8 @@ import {
   cairo,
   stark,
 } from "starknet";
+import GameList from './GameList';
+import BetForm from './PlaceBet';
 
 const Home = () => {
   const [currentContract, setCurrentContract] = useState();
@@ -16,6 +18,7 @@ const Home = () => {
   const [provider, setProvider] = useState();
   const [balance, setBalance] = useState(0);
   const [currentGameContract, setCurrentGameContract] = useState();
+  const [allGames, setAllGames] = useState([]);
 
   const initializeProvider = async () => {
     const currProvider = new RpcProvider({ sequencer: { baseUrl: "http://0.0.0.0:5050" } });
@@ -24,12 +27,13 @@ const Home = () => {
     const privateKey1 = '0x1800000000300000180000000000030000000000003006001800006600';
     const accountAddress1 = "0x517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973";
     const account1 = new Account(currProvider, accountAddress1, privateKey1);
+    setAccount1(account1);
 
     const privateKey2 = '0x33003003001800009900180300d206308b0070db00121318d17b5e6262150b';
     const accountAddress2 = "0x5686a647a9cdd63ade617e0baf3b364856b813b508f03903eb58a7e622d5855";
     const account2 = new Account(currProvider, accountAddress2, privateKey2);
 
-    const gameFactoryContractAddress = '0x047a4b867a4c3e001a4a87ccb4ca9bc1fad9c3f81a7967bab40ce3f4cf672182';
+    const gameFactoryContractAddress = '0x01cf757a0fe6f8297ddddb670c4e2ea9947b62d8c934c6f3f651c437f6b4fa08';
     const { abi: gameFactoryAbi } = await currProvider.getClassAt(gameFactoryContractAddress);
 
     if (gameFactoryAbi === undefined) {
@@ -71,7 +75,7 @@ const Home = () => {
   const createNewGame = async () => {
     const myCall = currentContract.populate("new_game", [
       '0x517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973',
-      '0x0789b13e94a7c8c95d2471f4f257b18672171eb55b9f86aaf4db944593be3479'
+      '0x01cf757a0fe6f8297ddddb670c4e2ea9947b62d8c934c6f3f651c437f6b4fa08'
     ]);
     const res = await currentContract.new_game(myCall.calldata);
     const res2 = await provider.waitForTransaction(res.transaction_hash);
@@ -92,16 +96,23 @@ const Home = () => {
     setCurrentGameContract(gameContract);
   };
 
+  const startGame = async() => {
+    const res = await currentGameContract.start_game();
+    const res2 = await provider.waitForTransaction(res.transaction_hash);
+    console.log(res, res2);
+  }
+
   const getAllGames = async () => {
     const response = await currentContract.get_all_games();
     const result = decimalsToHexStrings(response);
+    setAllGames(result);
     console.log(result);
   };
 
   function decimalsToHexStrings(decimalArray) {
     return decimalArray.map(decimalValue => {
       const hexString = decimalValue.toString(16);
-      return '0x' + hexString;
+      return '0x0' + hexString;
     });
   }
 
@@ -120,7 +131,10 @@ const Home = () => {
       <button onClick={decreasePlayerBalance}>Decrease player balance</button>
       <button onClick={createNewGame}>Create New Game</button>
       <button onClick={getAllGames}>Get all games</button>
+      <button onClick={startGame}>Start the game</button>
       <div>Here is the balance: {balance}</div>
+      <GameList {...{allGames, setCurrentGameContractFun}}/>
+      <BetForm {...{currentGameContract, provider, account1}}/>
     </div>
   );
 };
