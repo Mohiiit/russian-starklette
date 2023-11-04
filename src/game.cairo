@@ -22,7 +22,7 @@ mod RussianStarklette {
     use cairo_1_russian_roulette::game_handler::IRussianStarkletteDeployerDispatcherTrait;
     use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::InternalTrait;
     use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::{
-        game_ownersContractMemberStateTrait, game_contract_hashContractMemberStateTrait,
+        game_contract_hashContractMemberStateTrait,
         player_balanceContractMemberStateTrait
     };
     use cairo_1_russian_roulette::game_handler::IRussianStarkletteDeployerDispatcher;
