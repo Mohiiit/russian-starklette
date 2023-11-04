@@ -1,7 +1,7 @@
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::InternalTrait;
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::{
-     game_idContractMemberStateTrait,
-    game_contract_hashContractMemberStateTrait, player_balanceContractMemberStateTrait
+    game_idContractMemberStateTrait, game_contract_hashContractMemberStateTrait,
+    player_balanceContractMemberStateTrait
 };
 
 use starknet::syscalls::deploy_syscall;
@@ -60,4 +60,5 @@ fn STATE() -> RussianStarkletteDeployer::ContractState {
 //     state._increase_player_balance(PLAYER_ONE(), 200);
 //     assert(state.player_balance.read(PLAYER_ONE()) == 200, 'it should be 200');
 // }
+
 
