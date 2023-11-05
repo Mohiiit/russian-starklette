@@ -8,7 +8,9 @@ import {
   cairo,
   stark,
 } from "starknet";
+import AccountModal from '../modals/AccountModal';
 import GameList from './GameList';
+import Navbar from './Navbar';
 import BetForm from './PlaceBet';
 
 const Home = () => {
@@ -19,6 +21,15 @@ const Home = () => {
   const [balance, setBalance] = useState(0);
   const [currentGameContract, setCurrentGameContract] = useState();
   const [allGames, setAllGames] = useState([]);
+
+  const [openAccountModal, setOpenAccountModal] = useState(false);
+  const handleOpenAccountModal = () => {
+    setOpenAccountModal(true);
+  };
+
+  const handleCloseAccountModal = () => {
+    setOpenAccountModal(false);
+  };
 
   const initializeProvider = async () => {
     const currProvider = new RpcProvider({ sequencer: { baseUrl: "http://0.0.0.0:5050" } });
@@ -127,6 +138,8 @@ const Home = () => {
 
   return (
     <div>
+      <Navbar openAccountModal={handleOpenAccountModal}/>
+      <AccountModal open={openAccountModal} onClose={handleCloseAccountModal} />
       <button onClick={increasePlayerBalance}>Increase player balance</button>
       <button onClick={decreasePlayerBalance}>Decrease player balance</button>
       <button onClick={createNewGame}>Create New Game</button>
