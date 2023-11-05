@@ -9,6 +9,9 @@ import {
   stark,
 } from "starknet";
 import AccountModal from '../modals/AccountModal';
+import BalanceModal from '../modals/BalanceModal';
+import FailureModal from '../modals/FailureModal';
+import SuccessModal from '../modals/SuccessModal';
 import GameList from './GameList';
 import Navbar from './Navbar';
 import BetForm from './PlaceBet';
@@ -18,7 +21,7 @@ const Home = () => {
   const [account1, setAccount1] = useState();
   const [account2, setAccount2] = useState();
   const [provider, setProvider] = useState();
-  const [balance, setBalance] = useState(0);
+  
   const [currentGameContract, setCurrentGameContract] = useState();
   const [allGames, setAllGames] = useState([]);
 
@@ -29,6 +32,38 @@ const Home = () => {
 
   const handleCloseAccountModal = () => {
     setOpenAccountModal(false);
+  };
+
+  const [openBalanceModal, setOpenBalanceModal] = useState(false);
+  const handleOpenBalanceModal = () => {
+    setOpenBalanceModal(true);
+  };
+
+  const handleCloseBalanceModal = () => {
+    setOpenBalanceModal(false);
+  };
+
+  const [openSuccessSnackbar, setOpenSuccessSnackbar] = useState(false);
+  const [openFailureSnackbar, setOpenFailureSnackbar] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [failureMessage, setFailureMessage] = useState('');
+
+  const handleOpenSuccessSnackbar = (message) => {
+    setSuccessMessage(message);
+    setOpenSuccessSnackbar(true);
+  };
+
+  const handleOpenFailureSnackbar = (message) => {
+    setFailureMessage(message);
+    setOpenFailureSnackbar(true);
+  };
+
+  const handleCloseSnackbar = (type) => {
+    if (type === 'success') {
+      setOpenSuccessSnackbar(false);
+    } else {
+      setOpenFailureSnackbar(false);
+    }
   };
 
   const initializeProvider = async () => {
@@ -58,30 +93,7 @@ const Home = () => {
     console.log(currProvider, gameFactoryContract);
   };
 
-  const increasePlayerBalance = async () => {
-    const myCall = currentContract.populate("increase_player_balance", [
-      '0x517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973', 3000
-    ]);
-    const res = await currentContract.increase_player_balance(myCall.calldata);
-    const res2 = await provider.waitForTransaction(res.transaction_hash);
-    console.log(res, res2);
-    await getPlayerBalance();
-  };
-
-  const getPlayerBalance = async () => {
-    const response = await currentContract.get_player_balance('0x517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973');
-    setBalance(response.toString());
-  };
-
-  const decreasePlayerBalance = async () => {
-    const myCall = currentContract.populate("decrease_player_balance", [
-      '0x517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973', 3000
-    ]);
-    const res = await currentContract.decrease_player_balance(myCall.calldata);
-    const res2 = await provider.waitForTransaction(res.transaction_hash);
-    console.log(res, res2);
-    await getPlayerBalance();
-  };
+  
 
   const createNewGame = async () => {
     const myCall = currentContract.populate("new_game", [
@@ -138,16 +150,33 @@ const Home = () => {
 
   return (
     <div>
-      <Navbar openAccountModal={handleOpenAccountModal}/>
+      <Navbar openAccountModal={handleOpenAccountModal} openBalanceModal={handleOpenBalanceModal}/>
       <AccountModal open={openAccountModal} onClose={handleCloseAccountModal} />
-      <button onClick={increasePlayerBalance}>Increase player balance</button>
-      <button onClick={decreasePlayerBalance}>Decrease player balance</button>
+      <BalanceModal open={openBalanceModal} onClose={handleCloseBalanceModal} currentContract={currentContract} provider={provider}/>
+      {/* <button onClick={increasePlayerBalance}>Increase player balance</button>
+      <button onClick={decreasePlayerBalance}>Decrease player balance</button> */}
       <button onClick={createNewGame}>Create New Game</button>
       <button onClick={getAllGames}>Get all games</button>
       <button onClick={startGame}>Start the game</button>
-      <div>Here is the balance: {balance}</div>
+      {/* <div>Here is the balance: {balance}</div> */}
       <GameList {...{allGames, setCurrentGameContractFun}}/>
       <BetForm {...{currentGameContract, provider, account1}}/>
+      <button onClick={() => handleOpenSuccessSnackbar('Operation was successful!')}>
+        Show Success Snackbar
+      </button>
+      <button onClick={() => handleOpenFailureSnackbar('Operation failed. Please try again.')}>
+        Show Failure Snackbar
+      </button>
+      <SuccessModal
+        open={openSuccessSnackbar}
+        message={successMessage}
+        onClose={() => handleCloseSnackbar('success')}
+      />
+      <FailureModal
+        open={openFailureSnackbar}
+        message={failureMessage}
+        onClose={() => handleCloseSnackbar('failure')}
+      />
     </div>
   );
 };

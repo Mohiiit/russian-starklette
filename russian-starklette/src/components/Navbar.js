@@ -2,10 +2,7 @@ import React from 'react';
 import { AppBar, Toolbar, Typography, IconButton, Button, Menu, MenuItem } from '@mui/material';
 import { AccountBalance, AccountCircle } from '@mui/icons-material';
 
-function Navbar({openAccountModal}) {
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const openMenu = (event) => setAnchorEl(event.currentTarget);
-  const closeMenu = () => setAnchorEl(null);
+function Navbar({openAccountModal, openBalanceModal}) {
 
   return (
     <AppBar position="static">
@@ -15,7 +12,7 @@ function Navbar({openAccountModal}) {
         </Typography>
         <IconButton
           color="inherit"
-          onClick={openMenu}
+          onClick={openBalanceModal}
           aria-controls="account-menu"
           aria-haspopup="true"
         >
@@ -29,15 +26,7 @@ function Navbar({openAccountModal}) {
         >
           <AccountCircle />
         </IconButton>
-        <Menu
-          id="account-menu"
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={closeMenu}
-        >
-          <MenuItem onClick={closeMenu}>Account Balance</MenuItem>
-          <MenuItem onClick={closeMenu}>Account Address</MenuItem>
-        </Menu>
+        
       </Toolbar>
     </AppBar>
   );

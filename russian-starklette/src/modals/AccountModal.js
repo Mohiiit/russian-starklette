@@ -6,9 +6,11 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Slide,
 } from '@mui/material';
 
 function AccountModal({ open, onClose }) {
+  const [showAddAccountForm, setShowAddAccountForm] = useState(false);
   const [accountAddress, setAccountAddress] = useState('');
   const [privateKey, setPrivateKey] = useState('');
   const [activeAccount, setActiveAccount] = useState(localStorage.getItem('activeAccount'));
@@ -20,6 +22,7 @@ function AccountModal({ open, onClose }) {
     setActiveAccount(accountAddress);
     setAccountAddress('');
     setPrivateKey('');
+    onClose();
   };
 
   return (
@@ -29,10 +32,13 @@ function AccountModal({ open, onClose }) {
         <div>
           <strong>Active Account:</strong> {activeAccount}
         </div>
-        <Button variant="outlined" onClick={handleAddAccount}>
+        <Button
+          variant="outlined"
+          onClick={() => setShowAddAccountForm(!showAddAccountForm)}
+        >
           Add New Account
         </Button>
-        {activeAccount && (
+        {showAddAccountForm && <Slide direction="up" in={showAddAccountForm}>
           <div>
             <TextField
               label="Account Address"
@@ -56,7 +62,7 @@ function AccountModal({ open, onClose }) {
               Add New Account
             </Button>
           </div>
-        )}
+        </Slide>}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">
