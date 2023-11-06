@@ -37,7 +37,7 @@ mod RussianStarkletteDeployer {
         game_id: u128,
         game_contract_hash: ClassHash,
         player_balance: LegacyMap<ContractAddress, u128>,
-        games: List<ContractAddress>
+                games: List<ContractAddress>
     }
 
     #[constructor]

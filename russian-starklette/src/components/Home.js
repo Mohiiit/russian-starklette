@@ -12,6 +12,7 @@ import AccountModal from '../modals/AccountModal';
 import BalanceModal from '../modals/BalanceModal';
 import FailureModal from '../modals/FailureModal';
 import SuccessModal from '../modals/SuccessModal';
+import GameLists from './GameList';
 import GameList from './GameList';
 import Navbar from './Navbar';
 import BetForm from './PlaceBet';
@@ -148,25 +149,73 @@ const Home = () => {
     initializeProvider();
   }, []);
 
+  const ownedGames = [
+    {
+      contractAddress: '0x123',
+      totalBalance: 100.5,
+    },
+    {
+      contractAddress: '0x456',
+      totalBalance: 75.2,
+    },
+    {
+      contractAddress: '0x456',
+      totalBalance: 75.2,
+    },
+    {
+      contractAddress: '0x456',
+      totalBalance: 75.2,
+    },
+    {
+      contractAddress: '0x456',
+      totalBalance: 75.2,
+    },
+
+    {
+      contractAddress: '0x456',
+      totalBalance: 75.2,
+    },
+    // Add more owned games here
+  ];
+
+  const deployedGames = [
+    {
+      contractAddress: '0x456',
+      totalBalance: 75.2,
+    },
+    {
+      contractAddress: '0x456',
+      totalBalance: 75.2,
+    },
+    {
+      contractAddress: '0x456',
+      totalBalance: 75.2,
+    },
+    {
+      contractAddress: '0x456',
+      totalBalance: 75.2,
+    },
+    {
+      contractAddress: '0x456',
+      totalBalance: 75.2,
+    },
+    {
+      contractAddress: '0x456',
+      totalBalance: 75.2,
+    },
+    {
+      contractAddress: '0x456',
+      totalBalance: 75.2,
+    },
+    // Add more deployed games here
+  ];
+
   return (
     <div>
       <Navbar openAccountModal={handleOpenAccountModal} openBalanceModal={handleOpenBalanceModal}/>
       <AccountModal open={openAccountModal} onClose={handleCloseAccountModal} />
       <BalanceModal open={openBalanceModal} onClose={handleCloseBalanceModal} currentContract={currentContract} provider={provider}/>
-      {/* <button onClick={increasePlayerBalance}>Increase player balance</button>
-      <button onClick={decreasePlayerBalance}>Decrease player balance</button> */}
-      <button onClick={createNewGame}>Create New Game</button>
-      <button onClick={getAllGames}>Get all games</button>
-      <button onClick={startGame}>Start the game</button>
-      {/* <div>Here is the balance: {balance}</div> */}
-      <GameList {...{allGames, setCurrentGameContractFun}}/>
-      <BetForm {...{currentGameContract, provider, account1}}/>
-      <button onClick={() => handleOpenSuccessSnackbar('Operation was successful!')}>
-        Show Success Snackbar
-      </button>
-      <button onClick={() => handleOpenFailureSnackbar('Operation failed. Please try again.')}>
-        Show Failure Snackbar
-      </button>
+
       <SuccessModal
         open={openSuccessSnackbar}
         message={successMessage}
@@ -177,6 +226,8 @@ const Home = () => {
         message={failureMessage}
         onClose={() => handleCloseSnackbar('failure')}
       />
+
+      <GameLists {...{ownedGames, deployedGames}}/>
     </div>
   );
 };
