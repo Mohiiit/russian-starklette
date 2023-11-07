@@ -1,6 +1,7 @@
 use starknet::ContractAddress;
 use alexandria_storage::list::{List, ListTrait};
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer;
+use RussianStarklette::Game;
 
 #[starknet::interface]
 trait IRussianStarklette<TContractState> {
@@ -15,6 +16,7 @@ trait IRussianStarklette<TContractState> {
     fn update_bet_amount(ref self: TContractState, bet_amount: u128);
     fn end_game(ref self: TContractState);
     fn get_game_owner(self: @TContractState) -> ContractAddress;
+    fn get_game(self: @TContractState) -> Game;
 }
 
 #[starknet::contract]
@@ -86,6 +88,14 @@ mod RussianStarklette {
         prize_money: u128
     }
 
+    #[derive(Copy, Drop, Serde)]
+    struct Game {
+        game_id: u128,
+        game_owner: ContractAddress,
+        game_status: felt252,
+        game_winning_number: u128
+    }
+
 
     #[constructor]
     fn constructor(
@@ -102,6 +112,10 @@ mod RussianStarklette {
 
     #[external(v0)]
     impl RussianStarklette of super::IRussianStarklette<ContractState> {
+        fn get_game(self: @ContractState) -> Game {
+            let game = Game {game_id: self.game_id.read(), game_owner: self.game_owner.read(), game_status: self.game_status.read(), game_winning_number: self.game_winning_number.read()};
+            game
+        }
         fn get_game_owner(self: @ContractState) -> ContractAddress {
             self.game_owner.read()
         }
