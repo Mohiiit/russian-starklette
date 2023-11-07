@@ -15,7 +15,7 @@ const titleStyles = {
   fontSize: 18,
 };
 
-function GameCard({ contractAddress, totalBalance, ownership }) {
+function GameCard({ contractAddress, ownership }) {
     const [gameModalOpen, setGameModalOpen] = useState(false);
   const [otherGamesModalOpen, setOtherGamesModalOpen] = useState(false);
 
@@ -52,12 +52,6 @@ function GameCard({ contractAddress, totalBalance, ownership }) {
         </Typography>
         <Typography variant="body2" color="textSecondary">
           {contractAddress}
-        </Typography>
-        <Typography variant="h6" gutterBottom>
-          Total Balance:
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          {totalBalance} ETH
         </Typography>
       </CardContent>
     </Card>

@@ -9,17 +9,9 @@ import {
 } from '@mui/material';
 import { useAccount } from '../context/AccountContext';
 import { useGame } from '../context/ProviderContext';
-import {
-    Account,
-    Provider,
-    Contract,
-    RpcProvider,
-    shortString,
-    cairo,
-    stark,
-  } from "starknet";
+
 import { createGameFactoryContract } from '../utils';
-function BalanceModal({ open, onClose, currentContract }) {
+function BalanceModal({ open, onClose }) {
     const {account} = useAccount();
   const {provider, gameHandler} = useGame();
   const [newBalance, setNewBalance] = useState('');

@@ -4,7 +4,7 @@ import { useAccount } from '../context/AccountContext';
 import { useGame } from '../context/ProviderContext';
 import { createGameFactoryContract } from '../utils';
 
-function GameFactoryButton() {
+function GameFactoryButton({setOwnedGames}) {
   const [isCreating, setIsCreating] = React.useState(false); // State to track contract creation progress
   const { account } = useAccount();
   const { provider, gameHandler } = useGame();
@@ -39,7 +39,7 @@ function GameFactoryButton() {
         disabled={isCreating}
         startIcon={isCreating ? <CircularProgress size={20} /> : null}
       >
-        {isCreating ? 'Creating Contract...' : 'Create Game Factory Contract'}
+        {isCreating ? 'Creating New Game ...' : 'Create New Game'}
       </Button>
     </div>
   );

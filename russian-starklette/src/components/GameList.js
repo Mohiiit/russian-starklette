@@ -11,7 +11,7 @@ import { createGameFactoryContract } from '../utils';
 import { useAccount } from '../context/AccountContext';
 import { useGame } from '../context/ProviderContext';
 
-function GameLists({ ownedGames, deployedGames }) {
+function GameLists({ ownedGames, otherGames }) {
   const isLargeScreen = useMediaQuery('(min-width:600px)');
   const {account} = useAccount();
   const {provider, gameHandler} = useGame();
@@ -20,27 +20,7 @@ function GameLists({ ownedGames, deployedGames }) {
   async function getOneGame() {
     
   }
-  async function getAllGames() {
-    const current_Contract = await gameHandler;
-    const gameFactoryContract = await createGameFactoryContract(provider, current_Contract.address);
-    const response = await gameFactoryContract.get_all_games();
-    const result = decimalsToHexStrings(response);
-    setAllGames(result);
-  }
-
-  function decimalsToHexStrings(decimalArray) {
-    return decimalArray.map(decimalValue => {
-      const hexString = decimalValue.toString(16);
-      return '0x0' + hexString;
-    });
-  }
-
-
-  useEffect(() => {
-    if (provider && account) {
-      getAllGames();
-    }
-  }, [provider, account])
+  
 
   return (
     <Container padding={1}>
@@ -65,7 +45,6 @@ function GameLists({ ownedGames, deployedGames }) {
               <Grid item xs={12} key={game.contractAddress}>
                 <GameCard
                   contractAddress={game.contractAddress}
-                  totalBalance={game.totalBalance}
                   ownership='self'
                 />
               </Grid>
@@ -76,7 +55,7 @@ function GameLists({ ownedGames, deployedGames }) {
 
         <Grid item xs={12} sm={6} md={8}>
         <Typography variant="h4" gutterBottom>
-              Other Games
+              Other Gamess
             </Typography>
           <Box
             border={1}
@@ -90,11 +69,10 @@ function GameLists({ ownedGames, deployedGames }) {
           >
             
             <Grid container spacing={2} direction="row">
-            {deployedGames.map((game) => (
+            {otherGames.map((game) => (
               <Grid item xs={12} sm={6} md={6} key={game.contractAddress}>
                 <GameCard
                   contractAddress={game.contractAddress}
-                  totalBalance={game.totalBalance}
                   ownership='others'
                 />
               </Grid>
