@@ -17,7 +17,10 @@ import GameList from './GameList';
 import Navbar from './Navbar';
 import BetForm from './PlaceBet';
 
+import { useGame } from '../context/ProviderContext';
+
 const Home = () => {
+  const { setGameProviderInstance , updateGameHandler, updateGameHandlerAddress} = useGame();
   const [currentContract, setCurrentContract] = useState();
   const [account1, setAccount1] = useState();
   const [account2, setAccount2] = useState();
@@ -145,64 +148,36 @@ const Home = () => {
     console.log('owner-> ', response);
   };
 
-  useEffect(() => {
-    initializeProvider();
-  }, []);
+  const setGameHandlerAddress = async(currProvider, gameFactoryContractAddress) => {
+    updateGameHandlerAddress(gameFactoryContractAddress);
+    const { abi: gameFactoryAbi } = await currProvider.getClassAt(gameFactoryContractAddress);
+    if (gameFactoryAbi === undefined) {
+      throw new Error("no abi.");
+    }
+    const gameFactoryContract = new Contract(gameFactoryAbi, gameFactoryContractAddress, provider);
+    return gameFactoryContract;
+  }
+
+  
+  // useEffect(() => {
+  //   initializeProvider();
+  //   const currProvider = new RpcProvider({ sequencer: { baseUrl: "http://0.0.0.0:5050" } });
+  //   setGameProviderInstance(currProvider);
+  //   const gameFactoryContractAddress = '0x01cf757a0fe6f8297ddddb670c4e2ea9947b62d8c934c6f3f651c437f6b4fa08';
+  //   const gameFactoryContract = setGameHandlerAddress(currProvider, gameFactoryContractAddress);
+  //   updateGameHandler(gameFactoryContract);
+
+  // }, []);
 
   const ownedGames = [
     {
       contractAddress: '0x123',
       totalBalance: 100.5,
     },
-    {
-      contractAddress: '0x456',
-      totalBalance: 75.2,
-    },
-    {
-      contractAddress: '0x456',
-      totalBalance: 75.2,
-    },
-    {
-      contractAddress: '0x456',
-      totalBalance: 75.2,
-    },
-    {
-      contractAddress: '0x456',
-      totalBalance: 75.2,
-    },
-
-    {
-      contractAddress: '0x456',
-      totalBalance: 75.2,
-    },
     // Add more owned games here
   ];
 
   const deployedGames = [
-    {
-      contractAddress: '0x456',
-      totalBalance: 75.2,
-    },
-    {
-      contractAddress: '0x456',
-      totalBalance: 75.2,
-    },
-    {
-      contractAddress: '0x456',
-      totalBalance: 75.2,
-    },
-    {
-      contractAddress: '0x456',
-      totalBalance: 75.2,
-    },
-    {
-      contractAddress: '0x456',
-      totalBalance: 75.2,
-    },
-    {
-      contractAddress: '0x456',
-      totalBalance: 75.2,
-    },
     {
       contractAddress: '0x456',
       totalBalance: 75.2,

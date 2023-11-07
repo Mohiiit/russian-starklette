@@ -7,12 +7,28 @@ import {
   DialogActions,
   TextField,
 } from '@mui/material';
-
-function BalanceModal({ open, onClose, currentContract, provider }) {
+import { useAccount } from '../context/AccountContext';
+import { useGame } from '../context/ProviderContext';
+import {
+    Account,
+    Provider,
+    Contract,
+    RpcProvider,
+    shortString,
+    cairo,
+    stark,
+  } from "starknet";
+import { createGameFactoryContract } from '../utils';
+function BalanceModal({ open, onClose, currentContract }) {
+    const {account} = useAccount();
+  const {provider, gameHandler} = useGame();
   const [newBalance, setNewBalance] = useState('');
   const [balance, setBalance] = useState(0);
+
   const getPlayerBalance = async () => {
-    const response = await currentContract?.get_player_balance('0x517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973');
+    const current_Contract = await gameHandler;
+    const gameFactoryContract = await createGameFactoryContract(provider, current_Contract.address);
+    const response = await gameFactoryContract.get_player_balance(account.address);
     setBalance(response?.toString());
   };
 
@@ -25,10 +41,13 @@ function BalanceModal({ open, onClose, currentContract, provider }) {
     await getPlayerBalance();
   };
   const increasePlayerBalance = async (amount) => {
-    const myCall = currentContract.populate("increase_player_balance", [
-      '0x517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973', amount
+    const current_Contract = await gameHandler;
+    const gameFactoryContract = await createGameFactoryContract(provider, current_Contract.address);
+    gameFactoryContract.connect(account);
+    const myCall = gameFactoryContract.populate("increase_player_balance", [
+        account.address, amount
     ]);
-    const res = await currentContract.increase_player_balance(myCall.calldata);
+    const res = await gameFactoryContract.increase_player_balance(myCall.calldata);
     const res2 = await provider.waitForTransaction(res.transaction_hash);
     console.log(res, res2);
     // await getPlayerBalance();
@@ -37,18 +56,23 @@ function BalanceModal({ open, onClose, currentContract, provider }) {
   
 
   const decreasePlayerBalance = async (amount) => {
-    const myCall = currentContract.populate("decrease_player_balance", [
-      '0x517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973', amount
+    const current_Contract = await gameHandler;
+    const gameFactoryContract = await createGameFactoryContract(provider, current_Contract.address);
+    gameFactoryContract.connect(account);
+    const myCall = gameFactoryContract.populate("increase_player_balance", [
+        account.address, amount
     ]);
-    const res = await currentContract.decrease_player_balance(myCall.calldata);
+    const res = await gameFactoryContract.decrease_player_balance(myCall.calldata);
     const res2 = await provider.waitForTransaction(res.transaction_hash);
     console.log(res, res2);
     // await getPlayerBalance();
   };
 
   useEffect(() => {
-    getPlayerBalance();
-  }, [])
+    if(provider) {
+        getPlayerBalance();
+    }
+  }, [provider])
 
   return (
     <Dialog open={open} onClose={onClose}>

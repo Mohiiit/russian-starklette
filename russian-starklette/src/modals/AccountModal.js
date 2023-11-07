@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Button,
   Dialog,
@@ -9,21 +9,31 @@ import {
   Slide,
 } from '@mui/material';
 
+import { useAccount } from '../context/AccountContext';
+import { useGame } from '../context/ProviderContext';
+
 function AccountModal({ open, onClose }) {
   const [showAddAccountForm, setShowAddAccountForm] = useState(false);
   const [accountAddress, setAccountAddress] = useState('');
   const [privateKey, setPrivateKey] = useState('');
-  const [activeAccount, setActiveAccount] = useState(localStorage.getItem('activeAccount'));
+  const [activeAccount, setActiveAccount] = useState(localStorage.getItem('address'));
+
+  const {account, setNewAccount} = useAccount();
+  const {provider} = useGame();
 
   const handleAddAccount = () => {
-    // Handle adding a new account here
-    // You can save the new account data to local storage and set it as the active account
-    localStorage.setItem('activeAccount', accountAddress);
-    setActiveAccount(accountAddress);
-    setAccountAddress('');
-    setPrivateKey('');
-    onClose();
+    setNewAccount(accountAddress, privateKey);
   };
+
+  useEffect(() => {
+    const address = localStorage.getItem('address');
+    const key = localStorage.getItem('key');
+
+    if (address && key) {
+        setNewAccount(address, key);
+    }
+
+  }, [provider]);
 
   return (
     <Dialog open={open} onClose={onClose}>

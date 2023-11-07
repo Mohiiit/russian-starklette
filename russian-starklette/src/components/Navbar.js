@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AppBar, Toolbar, Typography, IconButton, Button, Menu, MenuItem } from '@mui/material';
 import { AccountBalance, AccountCircle } from '@mui/icons-material';
+import { Account } from 'starknet';
+import { useGame } from '../context/ProviderContext';
+import { useAccount } from '../context/AccountContext';
+
 
 function Navbar({openAccountModal, openBalanceModal}) {
+
+    
 
   return (
     <AppBar position="static">
