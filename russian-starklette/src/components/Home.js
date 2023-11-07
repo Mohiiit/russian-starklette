@@ -18,6 +18,7 @@ import Navbar from './Navbar';
 import BetForm from './PlaceBet';
 
 import { useGame } from '../context/ProviderContext';
+import GameFactoryButton from '../actions/CreateGameButton';
 
 const Home = () => {
   const { setGameProviderInstance , updateGameHandler, updateGameHandlerAddress} = useGame();
@@ -201,6 +202,7 @@ const Home = () => {
         message={failureMessage}
         onClose={() => handleCloseSnackbar('failure')}
       />
+      <GameFactoryButton />
 
       <GameLists {...{ownedGames, deployedGames}}/>
     </div>
