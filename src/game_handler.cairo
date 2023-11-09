@@ -100,8 +100,6 @@ mod RussianStarkletteDeployer {
             ref self: ContractState, player_contract_address: ContractAddress, amount: u128
         ) {
             let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
-            caller_address.print();
-            player_contract_address.print();
             assert(
                 player_contract_address == caller_address
                     || self._check_address_in_games(caller_address),
