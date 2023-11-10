@@ -97,7 +97,8 @@ mod RussianStarkletteDeployer {
         fn increase_player_balance(
             ref self: ContractState, player_contract_address: ContractAddress, amount: u128
         ) {
-            let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
+            let caller_address: ContractAddress = get_caller_address();
+            caller_address.print();
             assert(
                 player_contract_address == caller_address
                     || self._check_address_in_games(caller_address),
@@ -141,7 +142,8 @@ mod RussianStarkletteDeployer {
         fn get_player_balance(
             self: @ContractState, player_contract_address: ContractAddress
         ) -> u128 {
-            self._get_player_balance(player_contract_address)
+            self
+            ._get_player_balance(player_contract_address)
         }
     }
 
@@ -209,10 +211,6 @@ mod RussianStarkletteDeployer {
             )
                 .expect('failed to deploy counter');
             new_game_address
-        }
-        fn _get_contract_state(self: @ContractState) -> ContractState {
-            let game_handler_state = unsafe_new_contract_state();
-            game_handler_state
         }
     }
 }

@@ -8,7 +8,6 @@ trait IRussianStarklette<TContractState> {
     fn start_game(ref self: TContractState);
     fn place_bet(
         ref self: TContractState,
-        caller_address: ContractAddress,
         bet_number: u128,
         bet_amount: u128
     );
@@ -136,7 +135,6 @@ mod RussianStarklette {
         }
         fn place_bet(
             ref self: ContractState,
-            caller_address: ContractAddress,
             bet_number: u128,
             bet_amount: u128
         ) {
@@ -145,8 +143,7 @@ mod RussianStarklette {
             assert(bet_number < 101, 'choose between 1-100');
             assert(bet_amount > 0, 'amount should be >0');
 
-            let current_caller_address: ContractAddress = get_caller_address();
-            assert(current_caller_address == caller_address, 'only player can place bet');
+            let caller_address: ContractAddress = get_caller_address();
 
             let game_handler = IRussianStarkletteDeployerDispatcher {
                 contract_address: self.game_handler_address.read()

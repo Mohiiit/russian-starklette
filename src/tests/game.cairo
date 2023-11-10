@@ -62,7 +62,7 @@ let start_game = game_dispacther.start_game();
     let event = pop_log::<GameStarted>(game_dispacther.contract_address).unwrap();
     assert(event.game_id == 1, 'error in game id');
     assert(event.game_status == 'ONGOING', 'error in game status');
-let contract_response = game_dispacther.place_bet(PLAYER_TWO(), 2, 200);
+let contract_response = game_dispacther.place_bet(2, 200);
 let event = pop_log::<BetPlaced>(game_dispacther.contract_address).unwrap();
 
     assert(event.amount == 200, 'error in bet amount');

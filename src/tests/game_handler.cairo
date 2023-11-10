@@ -4,12 +4,12 @@ use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::{
     player_balanceContractMemberStateTrait
 };
 
-use starknet::syscalls::deploy_syscall;
+use starknet::syscalls::{deploy_syscall, storage_read_syscall};
 use starknet::Felt252TryIntoContractAddress;
 use starknet::{
     ContractAddress, get_caller_address, get_execution_info, ClassHash, class_hash_try_from_felt252
 };
-use starknet::testing::pop_log;
+use starknet::testing::{pop_log, set_contract_address};
 
 use debug::PrintTrait;
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer;
@@ -20,6 +20,7 @@ use cairo_1_russian_roulette::game::RussianStarklette;
 use cairo_1_russian_roulette::tests::constants::{
     OWNER, PLAYER_ONE, PLAYER_TWO, OTHER_OWNER, GAME_CLASS_HASH
 };
+use starknet::storage_access::{storage_base_address_from_felt252, storage_address_from_base_and_offset};
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::{GameCreated, BalanceUpdated};
 
 
@@ -49,12 +50,55 @@ fn test_new_game_ownership() {
     assert(event.game_id == 1, 'error in owner address');
 }
 
-// #[test]
-// #[available_gas(2000000)]
-// fn test_increase_balance_function() {
-//     let mut state = STATE();
-//     state._increase_player_balance(PLAYER_ONE(), 200);
-//     assert(state.player_balance.read(PLAYER_ONE()) == 200, 'it should be 200');
-// }
+#[test]
+#[available_gas(2000000)]
+fn test_internal_increase_balance_function() {
+    let mut state = STATE();
+    let old_player_balance = state.player_balance.read(PLAYER_ONE());
+    assert(old_player_balance==0, 'initial aomunt must be 0');
+    state._increase_player_balance(PLAYER_ONE(), 200);
+    let new_player_balance = state.player_balance.read(PLAYER_ONE());
+    assert(new_player_balance==200, 'updation amount must be 200');
+}
 
+#[test]
+#[available_gas(2000000)]
+fn test_internal_decrease_balance_function() {
+    let mut state = STATE();
+    state.player_balance.write(PLAYER_ONE(), 200);
+    let old_player_balance = state.player_balance.read(PLAYER_ONE());
+    assert(old_player_balance==200, 'initial aomunt must be 200');
+    state._decrease_player_balance(PLAYER_ONE(), 101);
+    let new_player_balance = state.player_balance.read(PLAYER_ONE());
+    assert(new_player_balance==99, 'updation amount must be 99');
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_internal_get_player_balance() {
+    let mut state = STATE();
+
+    let player_balance_0 = state._get_player_balance(PLAYER_ONE());
+    assert(player_balance_0==0, 'player balance must be 0');
+
+    state.player_balance.write(PLAYER_ONE(), 199);
+    let player_balance_1 = state._get_player_balance(PLAYER_ONE());
+    assert(player_balance_1==199, 'player balance must be 199');
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_external_get_player_balance() {
+    let mut state = STATE();
+    state.player_balance.write(PLAYER_ONE(), 200);
+    let expected = 200;
+    assert(IRussianStarkletteDeployer::get_player_balance(@state, PLAYER_ONE())==expected, 'issue in external get balance');
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_external_increase_balace_function() {
+    
+    
+}
 
