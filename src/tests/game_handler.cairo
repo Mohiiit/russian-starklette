@@ -97,8 +97,11 @@ fn test_external_get_player_balance() {
 
 #[test]
 #[available_gas(2000000)]
-fn test_external_increase_balace_function() {
-    
-    
+fn test_external_increase_balance_function() {
+    set_contract_address(PLAYER_ONE());
+    let (game_handler, game_handler_address) = deploy_contract();
+    game_handler.increase_player_balance(PLAYER_ONE(), 2001);
+    let update_balance = game_handler.get_player_balance(PLAYER_ONE());
+    assert(update_balance==2001, 'should be 2001');
 }
 
