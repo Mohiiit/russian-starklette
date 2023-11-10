@@ -20,6 +20,14 @@ fn OTHER_OWNER() -> ContractAddress {
     contract_address_const::<'OTHER_OWNER'>()
 }
 
+fn GAME_ONE() -> ContractAddress {
+    contract_address_const::<'GAME_ONE'>()
+}
+
+fn GAME_TWO() -> ContractAddress {
+    contract_address_const::<'GAME_TWO'>()
+}
+
 fn GAME_CLASS_HASH() -> ClassHash {
     let game_class_hash = class_hash_const::<
         0x02f45ad52642c593a9c21d6b84b6f29984b50c53f9ed2b01b34d1b1526ca88a5

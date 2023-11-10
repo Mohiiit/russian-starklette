@@ -194,7 +194,6 @@ mod RussianStarkletteDeployer {
         fn _add_to_games(ref self: ContractState, new_game_address: ContractAddress) {
             let mut games = self.games.read();
             games.append(new_game_address);
-            self.games.write(games);
         }
         fn _deploy_new_game(
             ref self: ContractState,
