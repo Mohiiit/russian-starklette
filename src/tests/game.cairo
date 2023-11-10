@@ -42,65 +42,31 @@ fn GAME_HANDLER_STATE() -> RussianStarkletteDeployer::ContractState {
 // }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(20000000)]
 fn test_placing_bets() {
     set_caller_address(PLAYER_ONE());
     set_contract_address(PLAYER_ONE());
     let (game_handler, game_handler_address) = deploy_contract();
-    // let response = game_handler.new_game(PLAYER_TWO(), game_handler_address);
-    // let event = pop_log::<GameCreated>(game_handler.contract_address).unwrap();
-    // assert(event.owner_address == PLAYER_TWO(), 'error in owner address');
-    // game_handler_address.print();
-    // let game_address = event.game_address;
-    // game_address.print();
-    // // set_caller_address(PLAYER_TWO());
+    let response = game_handler.new_game(PLAYER_TWO(), game_handler_address);
+    let event = pop_log::<GameCreated>(game_handler.contract_address).unwrap();
+    assert(event.owner_address == PLAYER_TWO(), 'error in owner address');
+    let game_address = event.game_address;
     set_contract_address(PLAYER_TWO());
     game_handler.increase_player_balance(PLAYER_TWO(), 200);
 
-    // let game_dispacther = IRussianStarkletteDispatcher { contract_address: game_address };
-    // let current_owner = game_dispacther.get_game_owner();
-    // assert(current_owner == PLAYER_ONE(), 'one should be owner');
+    let game_dispacther = IRussianStarkletteDispatcher { contract_address: game_address };
+    let current_owner = game_dispacther.get_game_owner();
+    assert(current_owner == PLAYER_TWO(), 'one should be owner');
 
-    // set_caller_address(PLAYER_ONE());
-    // set_contract_address(PLAYER_ONE());
-    // let start_game = game_dispacther.start_game();
-// set_caller_address(PLAYER_TWO());
-// set_contract_address(PLAYER_TWO());
-// let contract_response = game_dispacther.place_bet(PLAYER_TWO(), 2, 200);
-
-// assert(contract_response, 'issue in placing bet');
-
-    let (game, game_address) = deploy_game_contract(game_handler_address);
-    let current_owner = game.get_game_owner();
-    assert(current_owner == PLAYER_ONE(), 'one should be owner');
-    set_contract_address(PLAYER_ONE());
-    let start_game = game.start_game();
-    let event = pop_log::<GameStarted>(game.contract_address).unwrap();
+let start_game = game_dispacther.start_game();
+    let event = pop_log::<GameStarted>(game_dispacther.contract_address).unwrap();
     assert(event.game_id == 1, 'error in game id');
     assert(event.game_status == 'ONGOING', 'error in game status');
-
-    set_contract_address(PLAYER_TWO());
-    let contract_response = game.place_bet(PLAYER_TWO(), 2, 200);
-    let event = pop_log::<BetPlaced>(game.contract_address).unwrap();
+let contract_response = game_dispacther.place_bet(PLAYER_TWO(), 2, 200);
+let event = pop_log::<BetPlaced>(game_dispacther.contract_address).unwrap();
 
     assert(event.amount == 200, 'error in bet amount');
     assert(event.number == 2, 'error in bet number');
     assert(event.player == PLAYER_TWO(), 'error in bet player');
 
-}
-
-fn deploy_game_contract(game_handler_address: ContractAddress) -> (IRussianStarkletteDispatcher, ContractAddress) {
-    let game_id = 1;
-    let mut calldata = array![
-                game_id.into(), PLAYER_ONE().into(), game_handler_address.into()
-            ];
-    let class_hash = RussianStarklette::TEST_CLASS_HASH;
-    // class_hash.serialize(ref calldata);
-
-    let (address0, _) = deploy_syscall(
-        RussianStarklette::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    )
-        .unwrap();
-    let contract0 = IRussianStarkletteDispatcher { contract_address: address0 };
-    (contract0, address0)
 }

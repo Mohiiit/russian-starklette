@@ -55,14 +55,12 @@ mod RussianStarkletteDeployer {
 
     #[derive(Drop, starknet::Event)]
     struct GameCreated {
-        #[key]
         game_address: ContractAddress,
         owner_address: ContractAddress,
         game_id: u128
     }
     #[derive(Drop, starknet::Event)]
     struct BalanceUpdated {
-        #[key]
         player: ContractAddress,
         old_balance: u128,
         new_balance: u128
@@ -122,8 +120,6 @@ mod RussianStarkletteDeployer {
             ref self: ContractState, player_contract_address: ContractAddress, amount: u128
         ) {
             let caller_address: ContractAddress = get_caller_address();
-            caller_address.print();
-            player_contract_address.print();
             assert(
                 player_contract_address == caller_address
                     || self._check_address_in_games(caller_address),
