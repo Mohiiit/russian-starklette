@@ -14,7 +14,6 @@ trait IRussianStarklette<TContractState> {
     fn update_bet_number(ref self: TContractState, bet_number: u128);
     fn update_bet_amount(ref self: TContractState, bet_amount: u128);
     fn end_game(ref self: TContractState);
-    fn get_game_owner(self: @TContractState) -> ContractAddress;
     fn get_game(self: @TContractState) -> Game;
 }
 
@@ -114,9 +113,6 @@ mod RussianStarklette {
         fn get_game(self: @ContractState) -> Game {
             let game = Game {game_id: self.game_id.read(), game_owner: self.game_owner.read(), game_status: self.game_status.read(), game_winning_number: self.game_winning_number.read()};
             game
-        }
-        fn get_game_owner(self: @ContractState) -> ContractAddress {
-            self.game_owner.read()
         }
         fn start_game(ref self: ContractState) {
             let caller_address: ContractAddress = get_caller_address();
