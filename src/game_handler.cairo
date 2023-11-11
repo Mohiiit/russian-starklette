@@ -37,7 +37,7 @@ mod RussianStarkletteDeployer {
         game_id: u128,
         game_contract_hash: ClassHash,
         player_balance: LegacyMap<ContractAddress, u128>,
-                games: List<ContractAddress>
+        games: List<ContractAddress>
     }
 
     #[constructor]
@@ -97,7 +97,7 @@ mod RussianStarkletteDeployer {
         fn increase_player_balance(
             ref self: ContractState, player_contract_address: ContractAddress, amount: u128
         ) {
-            let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
+            let caller_address: ContractAddress = get_caller_address();
             assert(
                 player_contract_address == caller_address
                     || self._check_address_in_games(caller_address),
@@ -193,7 +193,6 @@ mod RussianStarkletteDeployer {
         fn _add_to_games(ref self: ContractState, new_game_address: ContractAddress) {
             let mut games = self.games.read();
             games.append(new_game_address);
-            self.games.write(games);
         }
         fn _deploy_new_game(
             ref self: ContractState,
@@ -209,10 +208,6 @@ mod RussianStarkletteDeployer {
             )
                 .expect('failed to deploy counter');
             new_game_address
-        }
-        fn _get_contract_state(self: @ContractState) -> ContractState {
-            let game_handler_state = unsafe_new_contract_state();
-            game_handler_state
         }
     }
 }

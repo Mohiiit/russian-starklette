@@ -6,16 +6,10 @@ use RussianStarklette::Game;
 #[starknet::interface]
 trait IRussianStarklette<TContractState> {
     fn start_game(ref self: TContractState);
-    fn place_bet(
-        ref self: TContractState,
-        caller_address: ContractAddress,
-        bet_number: u128,
-        bet_amount: u128
-    );
+    fn place_bet(ref self: TContractState, bet_number: u128, bet_amount: u128);
     fn update_bet_number(ref self: TContractState, bet_number: u128);
     fn update_bet_amount(ref self: TContractState, bet_amount: u128);
     fn end_game(ref self: TContractState);
-    fn get_game_owner(self: @TContractState) -> ContractAddress;
     fn get_game(self: @TContractState) -> Game;
 }
 
@@ -33,6 +27,7 @@ mod RussianStarklette {
     use alexandria_data_structures::array_ext::ArrayTraitExt;
     use starknet::contract_address_try_from_felt252;
     use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer;
+    use debug::PrintTrait;
 
     #[storage]
     struct Storage {
@@ -113,11 +108,13 @@ mod RussianStarklette {
     #[external(v0)]
     impl RussianStarklette of super::IRussianStarklette<ContractState> {
         fn get_game(self: @ContractState) -> Game {
-            let game = Game {game_id: self.game_id.read(), game_owner: self.game_owner.read(), game_status: self.game_status.read(), game_winning_number: self.game_winning_number.read()};
+            let game = Game {
+                game_id: self.game_id.read(),
+                game_owner: self.game_owner.read(),
+                game_status: self.game_status.read(),
+                game_winning_number: self.game_winning_number.read()
+            };
             game
-        }
-        fn get_game_owner(self: @ContractState) -> ContractAddress {
-            self.game_owner.read()
         }
         fn start_game(ref self: ContractState) {
             let caller_address: ContractAddress = get_caller_address();
@@ -134,19 +131,13 @@ mod RussianStarklette {
                     }
                 );
         }
-        fn place_bet(
-            ref self: ContractState,
-            caller_address: ContractAddress,
-            bet_number: u128,
-            bet_amount: u128
-        ) {
+        fn place_bet(ref self: ContractState, bet_number: u128, bet_amount: u128) {
             assert(self.game_status.read() == 'ONGOING', 'game not started yet');
             assert(bet_number > 0, 'choose between 1-100');
             assert(bet_number < 101, 'choose between 1-100');
             assert(bet_amount > 0, 'amount should be >0');
 
-            let current_caller_address: ContractAddress = get_caller_address();
-            assert(current_caller_address == caller_address, 'only player can place bet');
+            let caller_address: ContractAddress = get_caller_address();
 
             let game_handler = IRussianStarkletteDeployerDispatcher {
                 contract_address: self.game_handler_address.read()
@@ -156,6 +147,7 @@ mod RussianStarklette {
 
             self.bets_detail.write(caller_address, (bet_number, bet_amount));
             game_handler.decrease_player_balance(caller_address, bet_amount);
+            self._add_to_players(caller_address);
             self.emit(BetPlaced { amount: bet_amount, number: bet_number, player: caller_address });
         }
         fn update_bet_number(ref self: ContractState, bet_number: u128) {
@@ -216,15 +208,18 @@ mod RussianStarklette {
         }
         fn end_game(ref self: ContractState) {
             assert(self.game_status.read() == 'ONGOING', 'game not started or ended');
-            let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
-            assert(caller_address == self.game_owner.read(), 'only owner can start the game');
+            let caller_address: ContractAddress = get_caller_address();
+            assert(caller_address == self.game_owner.read(), 'only owner can end the game');
             let winning_number = self._generate_random_number();
             let (winner_address, total_balance, winner_bets_total, winner_player_bets) = self
                 ._find_winning_players(winning_number);
-            let winners = self
-                ._distribute_prize_pool(
+            let (winners, owner_fees) = self
+                ._get_prize_pool(
                     winner_address, total_balance, winner_bets_total, winner_player_bets
                 );
+
+            self._distribute_prize_pool(@winners, owner_fees);
+
             self
                 .emit(
                     GameEnded {
@@ -265,7 +260,6 @@ mod RussianStarklette {
             if (!player_already_added) {
                 let mut player_list: List<ContractAddress> = self.players.read();
                 player_list.append(player_address);
-                self.players.write(player_list);
             }
         }
 
@@ -300,35 +294,53 @@ mod RussianStarklette {
             (winner_address, total_balance, winner_bets_total, winner_player_bets)
         }
 
-        fn _distribute_prize_pool(
+        fn _get_prize_pool(
             self: @ContractState,
             winner_address: Array<ContractAddress>,
             total_balance: u128,
             winner_bets_total: u128,
             winner_player_bets: Array<u128>
-        ) -> Array<Winner> {
+        ) -> (Array<Winner>, u128) {
             let winner_player_array_length = winner_address.len();
             let mut current_index = 0;
             let prize_pool = total_balance - winner_bets_total;
             let game_handler = IRussianStarkletteDeployerDispatcher {
                 contract_address: self.game_handler_address.read()
             };
+            let mut left_out_balance = total_balance;
             let mut winners: Array<Winner> = array![];
             loop {
                 if (current_index == winner_player_array_length) {
                     break;
                 }
                 let bet_amount = *winner_player_bets.at(current_index);
-                let player_prize = bet_amount + ((bet_amount / total_balance) * prize_pool);
+                let player_prize = bet_amount + ((bet_amount * prize_pool) / total_balance);
                 let new_winner = Winner {
                     player_address: *winner_address.at(current_index), prize_money: player_prize
                 };
                 winners.append(new_winner);
-                game_handler
-                    .increase_player_balance(*winner_address.at(current_index), player_prize);
+                left_out_balance -= player_prize;
                 current_index += 1;
             };
-            winners
+            (winners, left_out_balance)
+        }
+
+        fn _distribute_prize_pool(self: @ContractState, winners: @Array<Winner>, owner_fees: u128) {
+            let winners_length = winners.len();
+            let mut current_index = 0;
+            let game_handler = IRussianStarkletteDeployerDispatcher {
+                contract_address: self.game_handler_address.read()
+            };
+            loop {
+                if (current_index == winners_length) {
+                    break;
+                }
+                let winner_here: Winner = *winners.at(current_index);
+                game_handler
+                    .increase_player_balance(winner_here.player_address, winner_here.prize_money);
+                current_index += 1;
+            };
+            game_handler.increase_player_balance(self.game_owner.read(), owner_fees);
         }
     }
 }
