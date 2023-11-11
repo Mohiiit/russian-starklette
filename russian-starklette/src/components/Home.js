@@ -6,7 +6,7 @@ import {
   RpcProvider,
   shortString,
   cairo,
-  stark,
+  stark, hash
 } from "starknet";
 import AccountModal from '../modals/AccountModal';
 import BalanceModal from '../modals/BalanceModal';
@@ -112,10 +112,12 @@ const Home = () => {
   }
 
 
+
   useEffect(() => {
     if (provider && account) {
       getAllGames();
     }
+
   }, [provider, account])
 
   // const ownedGames = [

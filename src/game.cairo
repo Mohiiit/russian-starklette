@@ -6,11 +6,7 @@ use RussianStarklette::Game;
 #[starknet::interface]
 trait IRussianStarklette<TContractState> {
     fn start_game(ref self: TContractState);
-    fn place_bet(
-        ref self: TContractState,
-        bet_number: u128,
-        bet_amount: u128
-    );
+    fn place_bet(ref self: TContractState, bet_number: u128, bet_amount: u128);
     fn update_bet_number(ref self: TContractState, bet_number: u128);
     fn update_bet_amount(ref self: TContractState, bet_amount: u128);
     fn end_game(ref self: TContractState);
@@ -111,7 +107,12 @@ mod RussianStarklette {
     #[external(v0)]
     impl RussianStarklette of super::IRussianStarklette<ContractState> {
         fn get_game(self: @ContractState) -> Game {
-            let game = Game {game_id: self.game_id.read(), game_owner: self.game_owner.read(), game_status: self.game_status.read(), game_winning_number: self.game_winning_number.read()};
+            let game = Game {
+                game_id: self.game_id.read(),
+                game_owner: self.game_owner.read(),
+                game_status: self.game_status.read(),
+                game_winning_number: self.game_winning_number.read()
+            };
             game
         }
         fn start_game(ref self: ContractState) {
@@ -129,11 +130,7 @@ mod RussianStarklette {
                     }
                 );
         }
-        fn place_bet(
-            ref self: ContractState,
-            bet_number: u128,
-            bet_amount: u128
-        ) {
+        fn place_bet(ref self: ContractState, bet_number: u128, bet_amount: u128) {
             assert(self.game_status.read() == 'ONGOING', 'game not started yet');
             assert(bet_number > 0, 'choose between 1-100');
             assert(bet_number < 101, 'choose between 1-100');
@@ -149,6 +146,7 @@ mod RussianStarklette {
 
             self.bets_detail.write(caller_address, (bet_number, bet_amount));
             game_handler.decrease_player_balance(caller_address, bet_amount);
+            self._add_to_players(caller_address);
             self.emit(BetPlaced { amount: bet_amount, number: bet_number, player: caller_address });
         }
         fn update_bet_number(ref self: ContractState, bet_number: u128) {

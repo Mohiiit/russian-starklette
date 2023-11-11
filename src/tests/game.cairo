@@ -15,7 +15,9 @@ use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::{
     game_idContractMemberStateTrait, game_contract_hashContractMemberStateTrait,
     player_balanceContractMemberStateTrait, GameCreated
 };
-use cairo_1_russian_roulette::game::RussianStarklette::{GameStarted, GameEnded, BetPlaced, BetUpdated};
+use cairo_1_russian_roulette::game::RussianStarklette::{
+    GameStarted, GameEnded, BetPlaced, BetUpdated
+};
 use debug::PrintTrait;
 use cairo_1_russian_roulette::tests::game_handler::{deploy_contract};
 use cairo_1_russian_roulette::tests::constants::{
@@ -32,11 +34,16 @@ fn GAME_HANDLER_STATE() -> RussianStarkletteDeployer::ContractState {
     RussianStarkletteDeployer::contract_state_for_testing()
 }
 
-fn mock_game_and_game_handler() -> (IRussianStarkletteDeployerDispatcher, ContractAddress, IRussianStarkletteDispatcher, ContractAddress) {
+fn mock_game_and_game_handler() -> (
+    IRussianStarkletteDeployerDispatcher,
+    ContractAddress,
+    IRussianStarkletteDispatcher,
+    ContractAddress
+) {
     let (game_handler, game_handler_address) = deploy_contract();
     game_handler.new_game(PLAYER_ONE(), game_handler_address);
     let event = pop_log::<GameCreated>(game_handler.contract_address).unwrap();
-    let game = IRussianStarkletteDispatcher {contract_address: event.game_address};
+    let game = IRussianStarkletteDispatcher { contract_address: event.game_address };
     (game_handler, game_handler_address, game, event.game_address)
 }
 
@@ -45,10 +52,10 @@ fn mock_game_and_game_handler() -> (IRussianStarkletteDeployerDispatcher, Contra
 fn test_get_game() {
     let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
     let function_response = game.get_game();
-    assert(function_response.game_id==1, 'should be one');
-    assert(function_response.game_owner==PLAYER_ONE(), 'should be player one');
-    assert(function_response.game_status=='NOT_STARTED', 'shouldnt have started');
-    assert(function_response.game_winning_number==0, 'should be zero');
+    assert(function_response.game_id == 1, 'should be one');
+    assert(function_response.game_owner == PLAYER_ONE(), 'should be player one');
+    assert(function_response.game_status == 'NOT_STARTED', 'shouldnt have started');
+    assert(function_response.game_winning_number == 0, 'should be zero');
 }
 
 #[test]
@@ -58,8 +65,8 @@ fn test_start_game() {
     set_contract_address(PLAYER_ONE());
     game.start_game();
     let event = pop_log::<GameStarted>(game.contract_address).unwrap();
-    assert(event.game_id==1, 'must be 1');
-    assert(event.game_status=='ONGOING', 'must have started');
+    assert(event.game_id == 1, 'must be 1');
+    assert(event.game_status == 'ONGOING', 'must have started');
 }
 
 #[test]
@@ -158,38 +165,77 @@ fn test_panic_placing_bets_not_enough_balance() {
 }
 
 #[test]
+#[available_gas(200000000)]
+fn test_update_bet_number() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+    set_contract_address(PLAYER_ONE());
+    game.start_game();
+    let event = pop_log::<GameStarted>(game.contract_address).unwrap();
+
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+
+    game.place_bet(69, 101);
+    let event = pop_log::<BetPlaced>(game.contract_address).unwrap();
+
+    game.update_bet_number(96);
+    let event = pop_log::<BetUpdated>(game.contract_address).unwrap();
+    assert(event.old_bet_amount == 101, 'error in old bet amount');
+    assert(event.new_bet_amount == 101, 'error in new bet amount');
+    assert(event.old_bet_number == 69, 'error in old bet number');
+    assert(event.new_bet_number == 96, 'error in new  bet number');
+    assert(event.player == PLAYER_TWO(), 'error in bet player');
+}
+
+#[test]
 #[available_gas(2000000)]
-fn test_placing_bet_internal() {
-    
+#[should_panic(expected: ('game not started yet', 'ENTRYPOINT_FAILED'))]
+fn test_panic_update_bet_number_game_not_started() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+    game.update_bet_number(96);
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('choose between 1-100', 'ENTRYPOINT_FAILED'))]
+fn test_panic_update_bets_bet_number_too_large() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+
+    set_contract_address(PLAYER_ONE());
+    game.start_game();
+
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+    game.update_bet_number(101);
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('choose between 1-100', 'ENTRYPOINT_FAILED'))]
+fn test_panic_update_bets_bet_number_too_small() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+
+    set_contract_address(PLAYER_ONE());
+    game.start_game();
+
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+    game.update_bet_number(0);
 }
 
 
-// #[test]
-// #[available_gas(20000000)]
-// fn test_placing_bets() {
-//     set_caller_address(PLAYER_ONE());
-//     set_contract_address(PLAYER_ONE());
-//     let (game_handler, game_handler_address) = deploy_contract();
-//     let response = game_handler.new_game(PLAYER_TWO(), game_handler_address);
-//     let event = pop_log::<GameCreated>(game_handler.contract_address).unwrap();
-//     assert(event.owner_address == PLAYER_TWO(), 'error in owner address');
-//     let game_address = event.game_address;
-//     set_contract_address(PLAYER_TWO());
-//     game_handler.increase_player_balance(PLAYER_TWO(), 200);
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('no bets from player', 'ENTRYPOINT_FAILED'))]
+fn test_panic_update_bet_number_no_pre_bets() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
 
-//     let game_dispacther = IRussianStarkletteDispatcher { contract_address: game_address };
-//     let current_owner = game_dispacther.get_game();
-//     assert(current_owner.game_owner == PLAYER_TWO(), 'one should be owner');
+    set_contract_address(PLAYER_ONE());
+    game.start_game();
 
-// let start_game = game_dispacther.start_game();
-//     let event = pop_log::<GameStarted>(game_dispacther.contract_address).unwrap();
-//     assert(event.game_id == 1, 'error in game id');
-//     assert(event.game_status == 'ONGOING', 'error in game status');
-// let contract_response = game_dispacther.place_bet(2, 200);
-// let event = pop_log::<BetPlaced>(game_dispacther.contract_address).unwrap();
-
-//     assert(event.amount == 200, 'error in bet amount');
-//     assert(event.number == 2, 'error in bet number');
-//     assert(event.player == PLAYER_TWO(), 'error in bet player');
-
-// }
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+    game.update_bet_number(2);
+}

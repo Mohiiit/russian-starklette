@@ -37,7 +37,7 @@ mod RussianStarkletteDeployer {
         game_id: u128,
         game_contract_hash: ClassHash,
         player_balance: LegacyMap<ContractAddress, u128>,
-                games: List<ContractAddress>
+        games: List<ContractAddress>
     }
 
     #[constructor]
@@ -141,8 +141,7 @@ mod RussianStarkletteDeployer {
         fn get_player_balance(
             self: @ContractState, player_contract_address: ContractAddress
         ) -> u128 {
-            self
-            ._get_player_balance(player_contract_address)
+            self._get_player_balance(player_contract_address)
         }
     }
 

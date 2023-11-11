@@ -21,8 +21,12 @@ use cairo_1_russian_roulette::game::RussianStarklette;
 use cairo_1_russian_roulette::tests::constants::{
     OWNER, PLAYER_ONE, PLAYER_TWO, OTHER_OWNER, GAME_CLASS_HASH, GAME_ONE, GAME_TWO
 };
-use starknet::storage_access::{storage_base_address_from_felt252, storage_address_from_base_and_offset};
-use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::{GameCreated, BalanceUpdated};
+use starknet::storage_access::{
+    storage_base_address_from_felt252, storage_address_from_base_and_offset
+};
+use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer::{
+    GameCreated, BalanceUpdated
+};
 use alexandria_storage::list::{List, ListTrait};
 use alexandria_data_structures::array_ext::ArrayTraitExt;
 
@@ -57,10 +61,10 @@ fn test_new_game_ownership() {
 fn test_internal_increase_balance_function() {
     let mut state = STATE();
     let old_player_balance = state.player_balance.read(PLAYER_ONE());
-    assert(old_player_balance==0, 'initial aomunt must be 0');
+    assert(old_player_balance == 0, 'initial aomunt must be 0');
     state._increase_player_balance(PLAYER_ONE(), 200);
     let new_player_balance = state.player_balance.read(PLAYER_ONE());
-    assert(new_player_balance==200, 'updation amount must be 200');
+    assert(new_player_balance == 200, 'updation amount must be 200');
 }
 
 #[test]
@@ -69,10 +73,10 @@ fn test_internal_decrease_balance_function() {
     let mut state = STATE();
     state.player_balance.write(PLAYER_ONE(), 200);
     let old_player_balance = state.player_balance.read(PLAYER_ONE());
-    assert(old_player_balance==200, 'initial aomunt must be 200');
+    assert(old_player_balance == 200, 'initial aomunt must be 200');
     state._decrease_player_balance(PLAYER_ONE(), 101);
     let new_player_balance = state.player_balance.read(PLAYER_ONE());
-    assert(new_player_balance==99, 'updation amount must be 99');
+    assert(new_player_balance == 99, 'updation amount must be 99');
 }
 
 #[test]
@@ -81,11 +85,11 @@ fn test_internal_get_player_balance() {
     let mut state = STATE();
 
     let player_balance_0 = state._get_player_balance(PLAYER_ONE());
-    assert(player_balance_0==0, 'player balance must be 0');
+    assert(player_balance_0 == 0, 'player balance must be 0');
 
     state.player_balance.write(PLAYER_ONE(), 199);
     let player_balance_1 = state._get_player_balance(PLAYER_ONE());
-    assert(player_balance_1==199, 'player balance must be 199');
+    assert(player_balance_1 == 199, 'player balance must be 199');
 }
 
 #[test]
@@ -94,7 +98,10 @@ fn test_external_get_player_balance() {
     let mut state = STATE();
     state.player_balance.write(PLAYER_ONE(), 200);
     let expected = 200;
-    assert(IRussianStarkletteDeployer::get_player_balance(@state, PLAYER_ONE())==expected, 'issue in external get balance');
+    assert(
+        IRussianStarkletteDeployer::get_player_balance(@state, PLAYER_ONE()) == expected,
+        'issue in external get balance'
+    );
 }
 
 #[test]
@@ -104,9 +111,9 @@ fn test_external_increase_balance_function() {
     let (game_handler, game_handler_address) = deploy_contract();
     game_handler.increase_player_balance(PLAYER_ONE(), 2001);
     let event = pop_log::<BalanceUpdated>(game_handler.contract_address).unwrap();
-    assert(event.player==PLAYER_ONE(), 'should be one');
-    assert(event.old_balance==0, 'should be 0');
-    assert(event.new_balance==2001, 'should be 2001');
+    assert(event.player == PLAYER_ONE(), 'should be one');
+    assert(event.old_balance == 0, 'should be 0');
+    assert(event.new_balance == 2001, 'should be 2001');
 }
 
 
@@ -128,9 +135,9 @@ fn test_external_decrease_balance_function() {
     let event = pop_log::<BalanceUpdated>(game_handler.contract_address).unwrap();
     game_handler.decrease_player_balance(PLAYER_ONE(), 1999);
     let event = pop_log::<BalanceUpdated>(game_handler.contract_address).unwrap();
-    assert(event.player==PLAYER_ONE(), 'should be one');
-    assert(event.old_balance==2001, 'should be 2001');
-    assert(event.new_balance==2, 'should be 2');
+    assert(event.player == PLAYER_ONE(), 'should be one');
+    assert(event.old_balance == 2001, 'should be 2001');
+    assert(event.new_balance == 2, 'should be 2');
 }
 
 
@@ -149,7 +156,7 @@ fn test_internal_get_game_id() {
     let mut state = STATE();
     state.game_id.write(2);
     let function_response = state._get_game_id();
-    assert(function_response==2, 'must be 2');
+    assert(function_response == 2, 'must be 2');
 }
 
 #[test]
@@ -158,7 +165,7 @@ fn test_internal_set_game_id() {
     let mut state = STATE();
     state.game_id.write(2);
     state._set_game_id();
-    assert(state.game_id.read()==3, 'must be 3');
+    assert(state.game_id.read() == 3, 'must be 3');
 }
 
 #[test]
@@ -190,8 +197,7 @@ fn test_internal_add_to_games() {
 #[test]
 #[available_gas(2000000)]
 fn test_inernal_get_all_games() {
-
-    let mut mock_game_array= ArrayTrait::<ContractAddress>::new();
+    let mut mock_game_array = ArrayTrait::<ContractAddress>::new();
     mock_game_array.append(GAME_ONE());
     mock_game_array.append(GAME_TWO());
 
@@ -201,24 +207,23 @@ fn test_inernal_get_all_games() {
 
     let function_response = state._get_all_games();
 
-    assert(function_response==mock_game_array, 'should be equal');
+    assert(function_response == mock_game_array, 'should be equal');
 }
 
 #[test]
 #[available_gas(2000000)]
 fn test_internal_add_to_games_and_get_all_games() {
-    
-    let mut mock_game_array= ArrayTrait::<ContractAddress>::new();
+    let mut mock_game_array = ArrayTrait::<ContractAddress>::new();
     mock_game_array.append(GAME_ONE());
 
     let mut state = STATE();
     state._add_to_games(GAME_ONE());
     let function_response = state._get_all_games();
-    assert(function_response==mock_game_array, 'should be equal');
+    assert(function_response == mock_game_array, 'should be equal');
 
     state._add_to_games(GAME_TWO());
     mock_game_array.append(GAME_TWO());
 
     let function_response = state._get_all_games();
-    assert(function_response==mock_game_array, 'should be equal');
+    assert(function_response == mock_game_array, 'should be equal');
 }

@@ -50,7 +50,7 @@ export function GameProvider({ children }) {
   useEffect(() => {
     const currProvider = new RpcProvider({ sequencer: { baseUrl: "http://0.0.0.0:5050" } });
     setGameProviderInstance(currProvider);
-    const gameFactoryContractAddress = '0x0325ce6e04141cedf664003b0ae3208351a0c0eac7201ae07cf7930365a8de8f';
+    const gameFactoryContractAddress = '0x053c7200cd634be3547315bedf977e2ff116ebe7be4307d7f18c99d629b78ace';
     const gameFactoryContract = setGameHandlerAddressFunction(currProvider, gameFactoryContractAddress);
     updateGameHandler(gameFactoryContract);
     console.log(currProvider, gameFactoryContract);
