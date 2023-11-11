@@ -239,3 +239,109 @@ fn test_panic_update_bet_number_no_pre_bets() {
     game_handler.increase_player_balance(PLAYER_TWO(), 200);
     game.update_bet_number(2);
 }
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('game not started yet', 'ENTRYPOINT_FAILED'))]
+fn test_panic_update_bet_amount_game_not_started() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+    game.update_bet_amount(96);
+}
+
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('amount should be >0', 'ENTRYPOINT_FAILED'))]
+fn test_panic_update_bet_amount_bet_amount_zero() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+
+    set_contract_address(PLAYER_ONE());
+    game.start_game();
+
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+    game.update_bet_amount( 0);
+}
+
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('no bets from player', 'ENTRYPOINT_FAILED'))]
+fn test_panic_update_bet_amount_no_pre_bets() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+
+    set_contract_address(PLAYER_ONE());
+    game.start_game();
+
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+    game.update_bet_amount(2);
+}
+
+#[test]
+#[available_gas(200000000)]
+fn test_update_bet_amount_with_lesser_than_already_placed_amount() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+    set_contract_address(PLAYER_ONE());
+    game.start_game();
+    let event = pop_log::<GameStarted>(game.contract_address).unwrap();
+
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+
+    game.place_bet(69, 101);
+    let event = pop_log::<BetPlaced>(game.contract_address).unwrap();
+
+    game.update_bet_amount(100);
+    let event = pop_log::<BetUpdated>(game.contract_address).unwrap();
+    assert(event.old_bet_amount == 101, 'error in old bet amount');
+    assert(event.new_bet_amount == 100, 'error in new bet amount');
+    assert(event.old_bet_number == 69, 'error in old bet number');
+    assert(event.new_bet_number == 69, 'error in new  bet number');
+    assert(event.player == PLAYER_TWO(), 'error in bet player');
+}
+
+#[test]
+#[available_gas(200000000)]
+fn test_update_bet_amount_with_greater_than_already_placed_amount() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+    set_contract_address(PLAYER_ONE());
+    game.start_game();
+    let event = pop_log::<GameStarted>(game.contract_address).unwrap();
+
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+
+    game.place_bet(69, 101);
+    let event = pop_log::<BetPlaced>(game.contract_address).unwrap();
+
+    game.update_bet_amount(199);
+    let event = pop_log::<BetUpdated>(game.contract_address).unwrap();
+    assert(event.old_bet_amount == 101, 'error in old bet amount');
+    assert(event.new_bet_amount == 199, 'error in new bet amount');
+    assert(event.old_bet_number == 69, 'error in old bet number');
+    assert(event.new_bet_number == 69, 'error in new  bet number');
+    assert(event.player == PLAYER_TWO(), 'error in bet player');
+}
+
+#[test]
+#[available_gas(200000000)]
+#[should_panic(expected: ('not enough balace', 'ENTRYPOINT_FAILED'))]
+fn test_panic_update_bet_amount_with_greater_than_already_placed_amount_with_no_balance() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+    set_contract_address(PLAYER_ONE());
+    game.start_game();
+    let event = pop_log::<GameStarted>(game.contract_address).unwrap();
+
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+
+    game.place_bet(69, 101);
+    let event = pop_log::<BetPlaced>(game.contract_address).unwrap();
+
+    game.update_bet_amount(201);
+    let event = pop_log::<BetUpdated>(game.contract_address).unwrap();
+    
+}

@@ -208,7 +208,7 @@ mod RussianStarklette {
         fn end_game(ref self: ContractState) {
             assert(self.game_status.read() == 'ONGOING', 'game not started or ended');
             let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
-            assert(caller_address == self.game_owner.read(), 'only owner can start the game');
+            assert(caller_address == self.game_owner.read(), 'only owner can end the game');
             let winning_number = self._generate_random_number();
             let (winner_address, total_balance, winner_bets_total, winner_player_bets) = self
                 ._find_winning_players(winning_number);
