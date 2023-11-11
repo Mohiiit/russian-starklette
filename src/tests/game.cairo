@@ -1,3 +1,8 @@
+use core::array::ArrayTrait;
+use cairo_1_russian_roulette::game::RussianStarklette::{
+    playersContractMemberStateTrait, bets_detailContractMemberStateTrait, Winner
+};
+use cairo_1_russian_roulette::game::RussianStarklette::PrivateTrait;
 use cairo_1_russian_roulette::game_handler::IRussianStarkletteDeployer;
 use cairo_1_russian_roulette::game_handler::IRussianStarkletteDeployerDispatcherTrait;
 use cairo_1_russian_roulette::game::IRussianStarkletteDispatcherTrait;
@@ -25,6 +30,8 @@ use cairo_1_russian_roulette::tests::constants::{
 };
 use cairo_1_russian_roulette::game_handler::IRussianStarkletteDeployerDispatcher;
 use starknet::testing::pop_log;
+use alexandria_storage::list::{List, ListTrait};
+use alexandria_data_structures::array_ext::ArrayTraitExt;
 
 fn GAME_STATE() -> RussianStarklette::ContractState {
     RussianStarklette::contract_state_for_testing()
@@ -262,7 +269,7 @@ fn test_panic_update_bet_amount_bet_amount_zero() {
 
     set_contract_address(PLAYER_TWO());
     game_handler.increase_player_balance(PLAYER_TWO(), 200);
-    game.update_bet_amount( 0);
+    game.update_bet_amount(0);
 }
 
 
@@ -343,5 +350,156 @@ fn test_panic_update_bet_amount_with_greater_than_already_placed_amount_with_no_
 
     game.update_bet_amount(201);
     let event = pop_log::<BetUpdated>(game.contract_address).unwrap();
-    
+}
+
+#[test]
+#[available_gas(20000000)]
+#[should_panic(expected: ('only owner can end the game', 'ENTRYPOINT_FAILED'))]
+fn test_panic_end_game_not_owner() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+    set_contract_address(PLAYER_ONE());
+    game.start_game();
+    let event = pop_log::<GameStarted>(game.contract_address).unwrap();
+
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+
+    game.place_bet(69, 101);
+    let event = pop_log::<BetPlaced>(game.contract_address).unwrap();
+
+    game.end_game();
+}
+
+#[test]
+#[available_gas(20000000)]
+#[should_panic(expected: ('game not started or ended', 'ENTRYPOINT_FAILED'))]
+fn test_panic_end_game_not_started() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+    set_contract_address(PLAYER_ONE());
+    game.end_game();
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_internal_find_winning_players() {
+    let mut state = GAME_STATE();
+    let mut mock_players_array = ArrayTrait::<ContractAddress>::new();
+    mock_players_array.append(PLAYER_ONE());
+    mock_players_array.append(PLAYER_TWO());
+
+    let mut mock_players_list: List<ContractAddress> = state.players.read();
+    mock_players_list.append(PLAYER_ONE());
+    mock_players_list.append(PLAYER_TWO());
+
+    state.bets_detail.write(PLAYER_ONE(), (23, 200));
+    state.bets_detail.write(PLAYER_TWO(), (24, 200));
+
+    let mut ideal_winner_address = ArrayTrait::<ContractAddress>::new();
+    ideal_winner_address.append(PLAYER_ONE());
+    let mut ideal_winner_player_bets = ArrayTrait::<u128>::new();
+    ideal_winner_player_bets.append(200);
+    let mut ideal_total_balance = 400;
+    let mut ideal_winner_bets_total = 200;
+
+    let (winner_address, total_balance, winner_bets_total, winner_player_bets) = state
+        ._find_winning_players(23);
+
+    assert(winner_address == ideal_winner_address, 'issue in winner address');
+    assert(total_balance == ideal_total_balance, 'issue in total balance');
+    assert(winner_bets_total == ideal_winner_bets_total, 'issue in winnder bets total');
+    assert(winner_player_bets == ideal_winner_player_bets, 'issue in winner player bets');
+}
+
+
+#[test]
+#[available_gas(2000000)]
+fn test_internal_distribute_prize_pool() {
+    let mut state = GAME_STATE();
+    let mut mock_players_array = ArrayTrait::<ContractAddress>::new();
+    mock_players_array.append(PLAYER_ONE());
+    mock_players_array.append(PLAYER_TWO());
+
+    let mut mock_players_list: List<ContractAddress> = state.players.read();
+    mock_players_list.append(PLAYER_ONE());
+    mock_players_list.append(PLAYER_TWO());
+
+    state.bets_detail.write(PLAYER_ONE(), (23, 200));
+    state.bets_detail.write(PLAYER_TWO(), (24, 200));
+
+    let (winner_address, total_balance, winner_bets_total, winner_player_bets) = state
+        ._find_winning_players(23);
+
+    let (winners, owner_fees) = state
+        ._get_prize_pool(winner_address, total_balance, winner_bets_total, winner_player_bets);
+    let winner_here_0: Winner = *winners.at(0);
+
+    assert(winner_here_0.player_address == PLAYER_ONE(), 'issue in winner player');
+    assert(winner_here_0.prize_money == 300, 'issue in prize money');
+    assert(owner_fees == 100, 'issue in owner left balance');
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_internal_generate_random_number() {
+    let mut state = GAME_STATE();
+    let random_number = state._generate_random_number();
+    assert(random_number > 0, 'must be > 0');
+    assert(random_number < 101, 'must be <= 100');
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_internal_add_to_players() {
+    let mut state = GAME_STATE();
+    state._add_to_players(PLAYER_ONE());
+    assert(state._check_player_participation(PLAYER_ONE()), 'one should be present');
+    assert(!state._check_player_participation(PLAYER_TWO()), 'two should be absent');
+    state._add_to_players(PLAYER_TWO());
+    assert(state._check_player_participation(PLAYER_ONE()), 'one should be present');
+    assert(state._check_player_participation(PLAYER_TWO()), 'two should be present');
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_internal_check_player_participation() {
+    let mut state = GAME_STATE();
+    let mut mock_player_list: List<ContractAddress> = state.players.read();
+    mock_player_list.append(PLAYER_ONE());
+    assert(state._check_player_participation(PLAYER_ONE()), 'one should be present');
+    assert(!state._check_player_participation(PLAYER_TWO()), 'two should be absent');
+    mock_player_list.append(PLAYER_TWO());
+    assert(state._check_player_participation(PLAYER_ONE()), 'one should be present');
+    assert(state._check_player_participation(PLAYER_TWO()), 'two should be present');
+}
+
+
+#[test]
+#[available_gas(200000000)]
+fn test_e2e_game0() {
+    let (game_handler, game_handler_address, game, game_address) = mock_game_and_game_handler();
+
+    set_contract_address(PLAYER_ONE());
+    game.start_game();
+    let event = pop_log::<GameStarted>(game.contract_address).unwrap();
+
+    set_contract_address(PLAYER_TWO());
+    game_handler.increase_player_balance(PLAYER_TWO(), 200);
+    game.place_bet(1, 200);
+    let event = pop_log::<BetPlaced>(game.contract_address).unwrap();
+
+    set_contract_address(PLAYER_ONE());
+    game_handler.increase_player_balance(PLAYER_ONE(), 200);
+    game.place_bet(19, 200);
+    let event = pop_log::<BetPlaced>(game.contract_address).unwrap();
+
+    game.end_game();
+    let event = pop_log::<GameEnded>(game.contract_address).unwrap();
+
+    let winner_here = *event.winners.at(0);
+
+    assert(event.game_status == 'ENDED', 'error in old bet amount');
+    assert(event.game_id == 1, 'error in new bet amount');
+    assert(event.game_winning_number == 1, 'error in old bet number');
+    assert(winner_here.player_address == PLAYER_TWO(), 'error in new  bet number');
+    assert(winner_here.prize_money == 300, 'error in bet player');
 }

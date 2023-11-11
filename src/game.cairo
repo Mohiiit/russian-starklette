@@ -27,6 +27,7 @@ mod RussianStarklette {
     use alexandria_data_structures::array_ext::ArrayTraitExt;
     use starknet::contract_address_try_from_felt252;
     use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer;
+    use debug::PrintTrait;
 
     #[storage]
     struct Storage {
@@ -207,15 +208,18 @@ mod RussianStarklette {
         }
         fn end_game(ref self: ContractState) {
             assert(self.game_status.read() == 'ONGOING', 'game not started or ended');
-            let caller_address: ContractAddress = get_execution_info().unbox().caller_address;
+            let caller_address: ContractAddress = get_caller_address();
             assert(caller_address == self.game_owner.read(), 'only owner can end the game');
             let winning_number = self._generate_random_number();
             let (winner_address, total_balance, winner_bets_total, winner_player_bets) = self
                 ._find_winning_players(winning_number);
-            let winners = self
-                ._distribute_prize_pool(
+            let (winners, owner_fees) = self
+                ._get_prize_pool(
                     winner_address, total_balance, winner_bets_total, winner_player_bets
                 );
+
+            self._distribute_prize_pool(@winners, owner_fees);
+
             self
                 .emit(
                     GameEnded {
@@ -256,7 +260,6 @@ mod RussianStarklette {
             if (!player_already_added) {
                 let mut player_list: List<ContractAddress> = self.players.read();
                 player_list.append(player_address);
-                self.players.write(player_list);
             }
         }
 
@@ -291,35 +294,53 @@ mod RussianStarklette {
             (winner_address, total_balance, winner_bets_total, winner_player_bets)
         }
 
-        fn _distribute_prize_pool(
+        fn _get_prize_pool(
             self: @ContractState,
             winner_address: Array<ContractAddress>,
             total_balance: u128,
             winner_bets_total: u128,
             winner_player_bets: Array<u128>
-        ) -> Array<Winner> {
+        ) -> (Array<Winner>, u128) {
             let winner_player_array_length = winner_address.len();
             let mut current_index = 0;
             let prize_pool = total_balance - winner_bets_total;
             let game_handler = IRussianStarkletteDeployerDispatcher {
                 contract_address: self.game_handler_address.read()
             };
+            let mut left_out_balance = total_balance;
             let mut winners: Array<Winner> = array![];
             loop {
                 if (current_index == winner_player_array_length) {
                     break;
                 }
                 let bet_amount = *winner_player_bets.at(current_index);
-                let player_prize = bet_amount + ((bet_amount / total_balance) * prize_pool);
+                let player_prize = bet_amount + ((bet_amount * prize_pool) / total_balance);
                 let new_winner = Winner {
                     player_address: *winner_address.at(current_index), prize_money: player_prize
                 };
                 winners.append(new_winner);
-                game_handler
-                    .increase_player_balance(*winner_address.at(current_index), player_prize);
+                left_out_balance -= player_prize;
                 current_index += 1;
             };
-            winners
+            (winners, left_out_balance)
+        }
+
+        fn _distribute_prize_pool(self: @ContractState, winners: @Array<Winner>, owner_fees: u128) {
+            let winners_length = winners.len();
+            let mut current_index = 0;
+            let game_handler = IRussianStarkletteDeployerDispatcher {
+                contract_address: self.game_handler_address.read()
+            };
+            loop {
+                if (current_index == winners_length) {
+                    break;
+                }
+                let winner_here: Winner = *winners.at(current_index);
+                game_handler
+                    .increase_player_balance(winner_here.player_address, winner_here.prize_money);
+                current_index += 1;
+            };
+            game_handler.increase_player_balance(self.game_owner.read(), owner_fees);
         }
     }
 }
