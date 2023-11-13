@@ -8,6 +8,10 @@ import {
     cairo,
     stark,
   } from "starknet";
+  import { connect, disconnect } from "get-starknet"
+  import { getBalance } from '../utils';
+
+
 // Create a context for the game provider and game handler
 const GameContext = createContext();
 
@@ -22,7 +26,35 @@ export function GameProvider({ children }) {
   const [provider, setProvider] = useState(null);
   const [gameHandler, setGameHandler] = useState(null);
   const [gameHandlerAddress, setGameHandlerAddress] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [account, setAccount] = useState(null);
+  const [balance, setBalance] = useState(0);
 
+  const disconnectWallet = async () => {
+    try {
+      await disconnect({ clearLastWallet: true })
+      setProvider()
+      setIsConnected(false)
+    }
+    catch (error) {
+      alert(error.message)
+    }
+  }
+
+  const connectWallet = async () => {
+    try {
+      const starknet = await connect()
+      if (!starknet) throw new Error("Failed to connect to wallet.")
+      await starknet.enable({ starknetVersion: "v5" })
+      setProvider(starknet.account)
+      console.log(starknet.selectedAddress);
+      setAccount(starknet.selectedAddress);
+      setIsConnected(true)
+    }
+    catch (error) {
+      alert(error.message)
+    }
+  }
   // Function to set the game provider
   const setGameProviderInstance = (gameProvider) => {
     setProvider(gameProvider);
@@ -48,16 +80,31 @@ export function GameProvider({ children }) {
   }
 
   useEffect(() => {
-    const currProvider = new RpcProvider({ sequencer: { baseUrl: "http://0.0.0.0:5050" } });
-    setGameProviderInstance(currProvider);
-    const gameFactoryContractAddress = '0x015b78c4ddcbcd1554225a76554df1d26e3ad2222d13d84236a65f7344e638e9';
-    const gameFactoryContract = setGameHandlerAddressFunction(currProvider, gameFactoryContractAddress);
+    // const currProvider = new RpcProvider({ sequencer: { baseUrl: "http://0.0.0.0:5050" } });
+    // setGameProviderInstance(currProvider);
+    if(provider) {
+      console.log('in', provider)
+      const gameFactoryContractAddress = '0x019032c77ed45efa58e15b5a9cab53d222789c9ef501dcbfce25d76d9a940c38';
+    const gameFactoryContract = setGameHandlerAddressFunction(provider, gameFactoryContractAddress);
     updateGameHandler(gameFactoryContract);
-    console.log(currProvider, gameFactoryContract);
-  }, []);
+    console.log(provider, gameFactoryContract);
+    }
+  }, [provider, isConnected]);
+
+  async function getBalances() {
+    const current_Contract = await gameHandler;
+    console.log(provider, current_Contract.address, provider.address);
+    await getBalance(provider, current_Contract.address, provider.address, setBalance);
+  }
+
+  useEffect(() => {
+    if(account && provider && gameHandler) {
+      getBalances();
+    }
+  }, [account]);
 
   return (
-    <GameContext.Provider value={{ provider, setGameProviderInstance, gameHandler, updateGameHandler, gameHandlerAddress, updateGameHandlerAddress }}>
+    <GameContext.Provider value={{ provider, setGameProviderInstance, gameHandler, updateGameHandler, gameHandlerAddress, updateGameHandlerAddress, connectWallet, disconnectWallet, setBalance, setAccount, account, balance, isConnected }}>
       {children}
     </GameContext.Provider>
   );

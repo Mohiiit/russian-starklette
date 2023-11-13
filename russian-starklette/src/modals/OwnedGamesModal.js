@@ -11,12 +11,10 @@ import {
   TextField
 } from '@mui/material';
 import { useGame } from '../context/ProviderContext';
-import { useAccount } from '../context/AccountContext';
 import { createGameFactoryContract, getBalance, placeBet, updateAmount, updateNumber } from '../utils';
 
 function OwnedGameModal({ open, handleClose, contractAddress }) {
-  const { setGameProviderInstance , updateGameHandler, updateGameHandlerAddress, provider, gameHandler} = useGame();
-  const {account, balance, setBalance} = useAccount();
+  const { setGameProviderInstance , updateGameHandler, updateGameHandlerAddress, provider, gameHandler, account, balance, setBalance} = useGame();
   const [gameStarted, setGameStarted] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
   const [betPlaced, setBetPlaced] = useState(false);
@@ -32,7 +30,8 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
 
   const startGame = async() => {
     const gameFactoryContract = await createGameFactoryContract(provider, contractAddress);
-    gameFactoryContract.connect(account);
+    // console.log(account.address.address)
+    // gameFactoryContract.connect(account.address.address);
     const response = await gameFactoryContract.start_game();
     console.log(response);
     setGameStarted(true);
@@ -40,10 +39,11 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
 
   async function endGame() {
     const gameFactoryContract = await createGameFactoryContract(provider, contractAddress);
-    gameFactoryContract.connect(account);
+    // gameFactoryContract.connect(account.address);
     const res = await gameFactoryContract.end_game();
     const res2 = await provider.waitForTransaction(res.transaction_hash);
     console.log(res, res2);
+    await preCheck();
   };
 
   const updateBetNumber = async() => {
@@ -69,15 +69,18 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
 
   async function preCheck() {
     const gameFactoryContract = await createGameFactoryContract(provider, contractAddress);
-    const formatGameStatus = { game_id: 'string', game_owner: 'string' , game_status: 'string', game_winning_number: 'string'};
+    const formatGameStatus = { game_id: 'number', game_owner: 'string' , game_status: 'string', game_winning_number: 'number'};
     const gameStatus = await gameFactoryContract.get_game({
       parseRequest: true,
       parseResponse: true,
       formatResponse: formatGameStatus,
   });
-    console.log(gameStatus.game_status);
+    console.log(gameStatus);
     if (gameStatus.game_status == 'ONGOING') {
       setGameStarted(true);
+    } else if(gameStatus.game_status == 'ENDED') {
+      setGameEnded(true);
+      setLuckyNumber(gameStatus.game_winning_number);
     }
     await checkBetStatus();
     
@@ -86,7 +89,7 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
   async function checkBetStatus() {
     const gameFactoryContract = await createGameFactoryContract(provider, contractAddress);
     const formatBetStatus = {bet_status: 'string', current_amount: 'number', current_number: 'number'};
-    const betStatus = await gameFactoryContract.get_player_bet(account.address, {
+    const betStatus = await gameFactoryContract.get_player_bet(account, {
       parseRequest: true,
       parseResponse: true,
       formatResponse: formatBetStatus,
@@ -122,6 +125,8 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
                 <Typography variant="h6" gutterBottom>
                   Lucky Number: {luckyNumber}
                 </Typography>
+                <DialogContentText>Bet Amount: {betAmount} ETH</DialogContentText>
+                  <DialogContentText>Bet Number: {betNumber}</DialogContentText>
               </div>
             ) : (
               <div>

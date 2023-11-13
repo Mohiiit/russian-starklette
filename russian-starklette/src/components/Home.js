@@ -8,6 +8,7 @@ import {
   cairo,
   stark, hash
 } from "starknet";
+import { connect, disconnect } from "get-starknet"
 import AccountModal from '../modals/AccountModal';
 import BalanceModal from '../modals/BalanceModal';
 import FailureModal from '../modals/FailureModal';
@@ -18,14 +19,12 @@ import Navbar from './Navbar';
 import BetForm from './PlaceBet';
 
 import { useGame } from '../context/ProviderContext';
-import { useAccount } from '../context/AccountContext';
 
 import GameFactoryButton from '../actions/CreateGameButton';
 import { createGameFactoryContract } from '../utils';
 
 const Home = () => {
-  const { setGameProviderInstance , updateGameHandler, updateGameHandlerAddress, provider, gameHandler} = useGame();
-  const {account} = useAccount();
+  const { account, setGameProviderInstance , updateGameHandler, updateGameHandlerAddress, provider, gameHandler} = useGame();
 
   const [allGames, setAllGames] = useState([]);
   const [ownedGames, setOwnedGames] = useState([]);
@@ -76,8 +75,8 @@ const Home = () => {
     const gameFactoryContract = await createGameFactoryContract(provider, address);
     const response = await gameFactoryContract.get_game();
     const currentGameOwner = '0x' + response.game_owner.toString(16);
-    console.log(currentGameOwner, account.address);
-    if (currentGameOwner === account.address) {
+    // console.log(currentGameOwner, account.address);
+    if (currentGameOwner === account) {
       
 
 if (!updatedOwnedGames.includes(address)) {
@@ -97,10 +96,12 @@ if (!updatedOwnedGames.includes(address)) {
     const current_Contract = await gameHandler;
     const gameFactoryContract = await createGameFactoryContract(provider, current_Contract.address);
     const response = await gameFactoryContract.get_all_games();
+    console.log(response);
     const result = decimalsToHexStrings(response);
     let updatedOwnedGames = [...ownedGames];
     let updateOtherGames = [...otherGames];
     for (const address of result) {
+      console.log('loop')
       await getOneGame(address, updatedOwnedGames, updateOtherGames);
     }
     setOwnedGames(updatedOwnedGames);
@@ -118,11 +119,11 @@ if (!updatedOwnedGames.includes(address)) {
 
 
   useEffect(() => {
-    if (provider && account) {
+    if (provider && account && gameHandler) {
       getAllGames();
     }
 
-  }, [provider, account])
+  }, [provider, account, gameHandler])
 
   // const ownedGames = [
   //   {

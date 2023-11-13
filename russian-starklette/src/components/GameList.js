@@ -7,19 +7,10 @@ import {
   Box,
 } from '@mui/material';
 import GameCard from './GameCard';
-import { createGameFactoryContract } from '../utils';
-import { useAccount } from '../context/AccountContext';
-import { useGame } from '../context/ProviderContext';
 
 function GameLists({ ownedGames, otherGames }) {
   const isLargeScreen = useMediaQuery('(min-width:600px)');
-  const {account} = useAccount();
-  const {provider, gameHandler} = useGame();
-  const [allGames, setAllGames] = useState([]);
-
-  async function getOneGame() {
-    
-  }
+  
   
 
   return (

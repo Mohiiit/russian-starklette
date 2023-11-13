@@ -26,7 +26,7 @@ export async function createGameFactoryContract(provider, address) {
 
   export async function placeBet(provider, address, account, number, amount) {
     const gameFactoryContract = await createGameFactoryContract(provider, address);
-    gameFactoryContract.connect(account);
+    // gameFactoryContract.connect(account);
     const myCall = gameFactoryContract.populate("place_bet", [
       number, amount
     ]);
@@ -37,13 +37,13 @@ export async function createGameFactoryContract(provider, address) {
 
   export async function getBalance(provider, address, account, setBalance) {
     const gameFactoryContract = await createGameFactoryContract(provider, address);
-    const response = await gameFactoryContract.get_player_balance(account.address);
+    const response = await gameFactoryContract.get_player_balance(account);
     setBalance(response?.toString());
   }
 
   export async function updateNumber(provider, address, account, number) {
     const gameFactoryContract = await createGameFactoryContract(provider, address);
-    gameFactoryContract.connect(account);
+    // gameFactoryContract.connect(account);
     const res = await gameFactoryContract.update_bet_number(number);
     const res2 = await provider.waitForTransaction(res.transaction_hash);
     console.log(res, res2);
@@ -51,7 +51,7 @@ export async function createGameFactoryContract(provider, address) {
 
   export async function updateAmount(provider, address, account, amount) {
     const gameFactoryContract = await createGameFactoryContract(provider, address);
-    gameFactoryContract.connect(account);
+    // gameFactoryContract.connect(account);
     
     const res = await gameFactoryContract.update_bet_amount(amount);
     const res2 = await provider.waitForTransaction(res.transaction_hash);

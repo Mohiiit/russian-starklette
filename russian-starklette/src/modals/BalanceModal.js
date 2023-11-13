@@ -7,18 +7,17 @@ import {
   DialogActions,
   TextField,
 } from '@mui/material';
-import { useAccount } from '../context/AccountContext';
 import { useGame } from '../context/ProviderContext';
 
 import { createGameFactoryContract, getBalance } from '../utils';
 function BalanceModal({ open, onClose }) {
-    const {account, balance, setBalance} = useAccount();
-  const {provider, gameHandler} = useGame();
+  const {provider, gameHandler, account, balance, setBalance} = useGame();
   const [newBalance, setNewBalance] = useState('');
   // const [balance, setBalance] = useState(0);
 
   const getPlayerBalance = async () => {
     const current_Contract = await gameHandler;
+    console.log(account);
     await getBalance(provider, current_Contract.address, account, setBalance);
   };
 
@@ -34,9 +33,9 @@ function BalanceModal({ open, onClose }) {
   const increasePlayerBalance = async (amount) => {
     const current_Contract = await gameHandler;
     const gameFactoryContract = await createGameFactoryContract(provider, current_Contract.address);
-    gameFactoryContract.connect(account);
+    // gameFactoryContract.connect(account);
     const myCall = gameFactoryContract.populate("increase_player_balance", [
-        account.address, amount
+        account, amount
     ]);
     const res = await gameFactoryContract.increase_player_balance(myCall.calldata);
     const res2 = await provider.waitForTransaction(res.transaction_hash);
@@ -60,10 +59,10 @@ function BalanceModal({ open, onClose }) {
   };
 
   useEffect(() => {
-    if(provider) {
+    if(provider && gameHandler && account) {
         getPlayerBalance();
     }
-  }, [provider])
+  }, [provider, gameHandler, account])
 
   return (
     <Dialog open={open} onClose={onClose}>

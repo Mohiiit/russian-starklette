@@ -9,7 +9,6 @@ import {
   Slide,
 } from '@mui/material';
 
-import { useAccount } from '../context/AccountContext';
 import { useGame } from '../context/ProviderContext';
 
 function AccountModal({ open, onClose }) {
@@ -17,27 +16,30 @@ function AccountModal({ open, onClose }) {
   const [accountAddress, setAccountAddress] = useState('');
   const [privateKey, setPrivateKey] = useState('');
   const [activeAccount, setActiveAccount] = useState(localStorage.getItem('address'));
+  const [isConnected, setIsConnected] = useState(false);
 
-  const {account, setNewAccount} = useAccount();
-  const {provider} = useGame();
+  const {provider, connectWallet, disconnectWallet, setNewAccount} = useGame();
 
   const handleAddAccount = () => {
-    setNewAccount(accountAddress, privateKey);
+    setNewAccount({address: accountAddress});
   };
 
-  useEffect(() => {
-    const address = localStorage.getItem('address');
-    const key = localStorage.getItem('key');
+  // useEffect(() => {
+  //   const address = localStorage.getItem('address');
 
-    if (address && key) {
-        setNewAccount(address, key);
-    }
+  //   if (address) {
+  //       setNewAccount({address: address});
+  //   }
 
-  }, [provider]);
+  // }, [provider]);
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Account Modal</DialogTitle>
+      {
+        isConnected ? (
+          <>
+          <DialogTitle>Connected</DialogTitle>
+          <p><button onClick={()=> {disconnectWallet()}}>Disconnect</button></p>
       <DialogContent>
         <div>
           <strong>Active Account:</strong> {activeAccount}
@@ -74,11 +76,17 @@ function AccountModal({ open, onClose }) {
           </div>
         </Slide>}
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="primary">
-          Close
-        </Button>
-      </DialogActions>
+          </>
+        ) : (
+          <div>
+          <span>Choose a wallet:</span>
+          <p>
+            <button onClick={() => connectWallet()}>Connect a Wallet</button>
+          </p>
+        </div>
+        )
+      }
+      
     </Dialog>
   );
 }
