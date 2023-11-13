@@ -1,7 +1,7 @@
 use starknet::ContractAddress;
 use alexandria_storage::list::{List, ListTrait};
 use cairo_1_russian_roulette::game_handler::RussianStarkletteDeployer;
-use RussianStarklette::Game;
+use RussianStarklette::{Game, CurrentBet};
 
 #[starknet::interface]
 trait IRussianStarklette<TContractState> {
@@ -11,6 +11,7 @@ trait IRussianStarklette<TContractState> {
     fn update_bet_amount(ref self: TContractState, bet_amount: u128);
     fn end_game(ref self: TContractState);
     fn get_game(self: @TContractState) -> Game;
+    fn get_player_bet(self: @TContractState, player_address: ContractAddress) -> CurrentBet; 
 }
 
 #[starknet::contract]
@@ -91,6 +92,13 @@ mod RussianStarklette {
         game_winning_number: u128
     }
 
+    #[derive(Copy, Drop, Serde)]
+    struct CurrentBet {
+        current_amount: u128,
+        bet_status: felt252,
+        current_number: u128
+    }
+
 
     #[constructor]
     fn constructor(
@@ -115,6 +123,20 @@ mod RussianStarklette {
                 game_winning_number: self.game_winning_number.read()
             };
             game
+        }
+        fn get_player_bet(self: @ContractState, player_address: ContractAddress) -> CurrentBet {
+            let mut current_bet = CurrentBet {
+                bet_status: 'NOT_PLACED',
+                current_number: 0,
+                current_amount: 0
+            };
+            if (self._check_player_participation(player_address)) {
+                let (current_bet_number, current_bet_amount) = self.bets_detail.read(player_address);
+                current_bet.current_amount = current_bet_amount;
+                current_bet.current_number = current_bet_number;
+                current_bet.bet_status = 'PLACED';
+            }
+            current_bet
         }
         fn start_game(ref self: ContractState) {
             let caller_address: ContractAddress = get_caller_address();
@@ -219,7 +241,7 @@ mod RussianStarklette {
                 );
 
             self._distribute_prize_pool(@winners, owner_fees);
-
+            // update the game status, issue here.
             self
                 .emit(
                     GameEnded {

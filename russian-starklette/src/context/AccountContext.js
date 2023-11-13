@@ -1,5 +1,6 @@
 import React, { useContext, createContext, useState, useEffect } from 'react';
 import { Account } from 'starknet';
+import { getBalance } from '../utils';
 import { useGame } from './ProviderContext';
 // Create a context for the account information
 const AccountContext = createContext();
@@ -11,8 +12,9 @@ export function useAccount() {
 
 // AccountProvider component to provide the account information
 export function AccountProvider({ children }) {
-    const {provider} = useGame();
+    const {provider, gameHandler} = useGame();
   const [account, setAccount] = useState(null);
+  const [balance, setBalance] = useState(0);
 
   // Function to set the account
   const setNewAccount = (address, privateKey) => {
@@ -24,11 +26,16 @@ export function AccountProvider({ children }) {
   };
 
   useEffect(() => {
-
-  }, [provider]);
+    if(account && provider && gameHandler) {
+      async function getBalances() {
+        const current_Contract = await gameHandler;
+        await getBalance(provider, current_Contract.address, account, setBalance);
+      }
+    }
+  }, [account]);
 
   return (
-    <AccountContext.Provider value={{ account, setNewAccount }}>
+    <AccountContext.Provider value={{ account, setNewAccount, balance, setBalance }}>
       {children}
     </AccountContext.Provider>
   );

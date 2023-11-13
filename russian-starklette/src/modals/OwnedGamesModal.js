@@ -8,20 +8,27 @@ import {
   DialogTitle,
   Typography,
   Box,
+  TextField
 } from '@mui/material';
 import { useGame } from '../context/ProviderContext';
 import { useAccount } from '../context/AccountContext';
-import { createGameFactoryContract, placeBet } from '../utils';
+import { createGameFactoryContract, getBalance, placeBet, updateAmount, updateNumber } from '../utils';
 
 function OwnedGameModal({ open, handleClose, contractAddress }) {
   const { setGameProviderInstance , updateGameHandler, updateGameHandlerAddress, provider, gameHandler} = useGame();
-  const {account} = useAccount();
+  const {account, balance, setBalance} = useAccount();
   const [gameStarted, setGameStarted] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
   const [betPlaced, setBetPlaced] = useState(false);
   const [betAmount, setBetAmount] = useState(0);
   const [betNumber, setBetNumber] = useState(0);
   const [luckyNumber, setLuckyNumber] = useState(0);
+  const [number, setNumber] = useState('');
+  const [amount, setAmount] = useState('');
+  const [updateAmountVisible, setUpdateAmountVisible] = useState(false);
+  const [updateNumberVisible, setUpdateNumberVisible] = useState(false);
+  const [newBetAmount, setNewBetAmount] = useState('');
+  const [newBetNumber, setNewBetNumber] = useState('');
 
   const startGame = async() => {
     const gameFactoryContract = await createGameFactoryContract(provider, contractAddress);
@@ -31,28 +38,69 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
     setGameStarted(true);
   };
 
-  const endGame = () => {
-    setGameEnded(true);
-    const randomNumber = Math.floor(Math.random() * 100); // Replace with your logic to determine the lucky number
-    setLuckyNumber(randomNumber);
+  async function endGame() {
+    const gameFactoryContract = await createGameFactoryContract(provider, contractAddress);
+    gameFactoryContract.connect(account);
+    const res = await gameFactoryContract.end_game();
+    const res2 = await provider.waitForTransaction(res.transaction_hash);
+    console.log(res, res2);
   };
 
-  const placeBets = async(amount, number) => {
-    await placeBet(provider, contractAddress, account, number, amount);
+  const updateBetNumber = async() => {
+    const parsedNumber =  (parseInt(newBetNumber, 10));
+    await updateNumber(provider, contractAddress, account, parsedNumber);
+    setUpdateNumberVisible(false);
+    await checkBetStatus();
+  };
+
+  const updateBetAmount = async() => {
+    const parsedAmount = (parseInt(newBetAmount, 10));
+    await updateAmount(provider, contractAddress, account, parsedAmount);
+    setUpdateAmountVisible(false);
+    await checkBetStatus();
+  };
+
+  const placeBets = async() => {
+    const parsedNumber = parseInt(number, 10);
+    const parsedAmount = parseInt(amount, 10);
+    await placeBet(provider, contractAddress, account, parsedNumber, parsedAmount);
+    await checkBetStatus();
   };
 
   async function preCheck() {
     const gameFactoryContract = await createGameFactoryContract(provider, contractAddress);
-    const formatAnswer = { game_id: 'string', game_owner: 'string' , game_status: 'string', game_winning_number: 'string'};
-    const res = await gameFactoryContract.get_game({
+    const formatGameStatus = { game_id: 'string', game_owner: 'string' , game_status: 'string', game_winning_number: 'string'};
+    const gameStatus = await gameFactoryContract.get_game({
       parseRequest: true,
       parseResponse: true,
-      formatResponse: formatAnswer,
+      formatResponse: formatGameStatus,
   });
-    console.log(res.game_status);
-    if (res.game_status == 'ONGOING') {
+    console.log(gameStatus.game_status);
+    if (gameStatus.game_status == 'ONGOING') {
       setGameStarted(true);
     }
+    await checkBetStatus();
+    
+  }
+
+  async function checkBetStatus() {
+    const gameFactoryContract = await createGameFactoryContract(provider, contractAddress);
+    const formatBetStatus = {bet_status: 'string', current_amount: 'number', current_number: 'number'};
+    const betStatus = await gameFactoryContract.get_player_bet(account.address, {
+      parseRequest: true,
+      parseResponse: true,
+      formatResponse: formatBetStatus,
+  });
+
+  console.log(betStatus);
+
+  if (betStatus.bet_status=='PLACED') {
+    setBetPlaced(true);
+    setBetAmount(betStatus.current_amount);
+    setBetNumber(betStatus.current_number);
+  }
+  const currentContract = await gameHandler;
+  await getBalance(provider, currentContract.address, account, setBalance);
   }
 
 
@@ -79,36 +127,114 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
               <div>
                 {betPlaced ? (
                   <div>
-                    <DialogContentText>Bet Placed</DialogContentText>
-                    <DialogContentText>
-                      Bet Amount: {betAmount} ETH
-                    </DialogContentText>
-                    <DialogContentText>
-                      Bet Number: {betNumber}
-                    </DialogContentText>
-                    <DialogActions>
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={endGame}
-                      >
-                        End Game
-                      </Button>
-                    </DialogActions>
-                  </div>
-                ) : (
-                  <div>
-                    <DialogContentText>No Bet Placed Yet</DialogContentText>
-                    <DialogActions>
+                  <DialogContentText>Bet Placed</DialogContentText>
+                  <DialogContentText>Bet Amount: {betAmount} ETH</DialogContentText>
+                  <DialogContentText>Bet Number: {betNumber}</DialogContentText>
+            
+                  {/* Update Number section */}
+                  {updateNumberVisible ? (
+                    <div>
+                      <TextField
+                        label="New Bet Number"
+                        variant="outlined"
+                        fullWidth
+                        value={newBetNumber}
+                        onChange={(e) => setNewBetNumber(e.target.value)}
+                        margin="dense"
+                        type="number"
+                      />
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={() => placeBet(10, 42)}
+                        onClick={updateBetNumber}
                       >
-                        Place Bet
+                        Update Number
                       </Button>
-                    </DialogActions>
-                  </div>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => setUpdateNumberVisible(true)}
+                    >
+                      Update Number
+                    </Button>
+                  )}
+            
+                  {/* Update Amount section */}
+                  {updateAmountVisible ? (
+                    <div>
+                      <TextField
+                        label="New Bet Amount"
+                        variant="outlined"
+                        fullWidth
+                        value={newBetAmount}
+                        onChange={(e) => setNewBetAmount(e.target.value)}
+                        margin="dense"
+                        type="number"
+                      />
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={updateBetAmount}
+                      >
+                        Update Amount
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => setUpdateAmountVisible(true)}
+                    >
+                      Update Amount
+                    </Button>
+                  )}
+            
+                  {/* End Game button */}
+                  <DialogActions>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      onClick={endGame}
+                    >
+                      End Game
+                    </Button>
+                  </DialogActions>
+                </div>
+                ) : (
+                  <div>
+      <DialogContentText>No Bet Placed Yet</DialogContentText>
+      <DialogContent>
+        <Typography>Current Balance: {balance}</Typography>
+        <TextField
+          label="Number"
+          variant="outlined"
+          fullWidth
+          value={number}
+          onChange={(e) => setNumber(e.target.value)}
+          margin="dense"
+        />
+        <TextField
+          label="Amount"
+          variant="outlined"
+          fullWidth
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          margin="dense"
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={placeBets}
+          disabled={!number || !amount} // Disable the button if either input is empty
+        >
+          Place Bet
+        </Button>
+      </DialogActions>
+    </div>
                 )}
               </div>
             )}
