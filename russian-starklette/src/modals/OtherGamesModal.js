@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Button,
   Dialog,
@@ -10,24 +10,88 @@ import {
   TextField,
   Box,
 } from '@mui/material';
+import { useGame } from '../context/ProviderContext';
+import { useAccount } from '../context/AccountContext';
+import { createGameFactoryContract, getBalance, placeBet, updateAmount, updateNumber } from '../utils';
 
-function OtherGamesModal({ open, handleClose }) {
+function OtherGamesModal({ open, handleClose, contractAddress }) {
+  const { setGameProviderInstance , updateGameHandler, updateGameHandlerAddress, provider, gameHandler} = useGame();
+  const {account, balance, setBalance} = useAccount();
   const [gameStarted, setGameStarted] = useState(true);
   const [gameEnded, setGameEnded] = useState(false);
   const [betPlaced, setBetPlaced] = useState(false);
   const [betAmount, setBetAmount] = useState(0);
   const [betNumber, setBetNumber] = useState(0);
+  const [updateAmountVisible, setUpdateAmountVisible] = useState(false);
+  const [updateNumberVisible, setUpdateNumberVisible] = useState(false);
+  const [newBetAmount, setNewBetAmount] = useState('');
+  const [newBetNumber, setNewBetNumber] = useState('');
 
-  const placeBet = (amount, number) => {
-    setBetAmount(amount);
-    setBetNumber(number);
-    setBetPlaced(true);
+  const placeBets = async() => {
+    const parsedNumber = parseInt(betNumber, 10);
+    const parsedAmount = parseInt(betAmount, 10);
+    await placeBet(provider, contractAddress, account, parsedNumber, parsedAmount);
+    await checkBetStatus();
   };
 
   const updateBet = (amount, number) => {
     setBetAmount(amount);
     setBetNumber(number);
   };
+  const updateBetNumber = async() => {
+    const parsedNumber =  (parseInt(newBetNumber, 10));
+    await updateNumber(provider, contractAddress, account, parsedNumber);
+    setUpdateNumberVisible(false);
+    await checkBetStatus();
+  };
+
+  const updateBetAmount = async() => {
+    const parsedAmount = (parseInt(newBetAmount, 10));
+    await updateAmount(provider, contractAddress, account, parsedAmount);
+    setUpdateAmountVisible(false);
+    await checkBetStatus();
+  };
+  async function preCheck() {
+    const gameFactoryContract = await createGameFactoryContract(provider, contractAddress);
+    const formatGameStatus = { game_id: 'string', game_owner: 'string' , game_status: 'string', game_winning_number: 'string'};
+    const gameStatus = await gameFactoryContract.get_game({
+      parseRequest: true,
+      parseResponse: true,
+      formatResponse: formatGameStatus,
+  });
+    console.log(gameStatus.game_status);
+    if (gameStatus.game_status == 'ONGOING') {
+      setGameStarted(true);
+    }
+    await checkBetStatus();
+    
+  }
+
+  async function checkBetStatus() {
+    const gameFactoryContract = await createGameFactoryContract(provider, contractAddress);
+    const formatBetStatus = {bet_status: 'string', current_amount: 'number', current_number: 'number'};
+    const betStatus = await gameFactoryContract.get_player_bet(account.address, {
+      parseRequest: true,
+      parseResponse: true,
+      formatResponse: formatBetStatus,
+  });
+
+  console.log(betStatus);
+
+  if (betStatus.bet_status=='PLACED') {
+    setBetPlaced(true);
+    setBetAmount(betStatus.current_amount);
+    setBetNumber(betStatus.current_number);
+  }
+  const currentContract = await gameHandler;
+  await getBalance(provider, currentContract.address, account, setBalance);
+  }
+
+  useEffect(() => {
+    if(open) {
+      preCheck();
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onClose={handleClose}>
@@ -40,40 +104,72 @@ function OtherGamesModal({ open, handleClose }) {
             <div>
               {betPlaced ? (
                 <div>
-                  <DialogContentText>Bet Placed</DialogContentText>
-                  <DialogContentText>Bet Amount: {betAmount} ETH</DialogContentText>
-                  <DialogContentText>Bet Number: {betNumber}</DialogContentText>
-                  <TextField
-                    label="Update Amount"
-                    variant="outlined"
-                    value={betAmount}
-                    onChange={(e) => setBetAmount(e.target.value)}
-                  />
-                  <DialogActions>
+                <DialogContentText>Bet Placed</DialogContentText>
+                <DialogContentText>Bet Amount: {betAmount} ETH</DialogContentText>
+                <DialogContentText>Bet Number: {betNumber}</DialogContentText>
+          
+                {/* Update Number section */}
+                {updateNumberVisible ? (
+                  <div>
+                    <TextField
+                      label="New Bet Number"
+                      variant="outlined"
+                      fullWidth
+                      value={newBetNumber}
+                      onChange={(e) => setNewBetNumber(e.target.value)}
+                      margin="dense"
+                      type="number"
+                    />
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={() => updateBet(betAmount, betNumber)}
-                    >
-                      Update Amount
-                    </Button>
-                  </DialogActions>
-                  <TextField
-                    label="Update Number"
-                    variant="outlined"
-                    value={betNumber}
-                    onChange={(e) => setBetNumber(e.target.value)}
-                  />
-                  <DialogActions>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => updateBet(betAmount, betNumber)}
+                      onClick={updateBetNumber}
                     >
                       Update Number
                     </Button>
-                  </DialogActions>
-                </div>
+                  </div>
+                ) : (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => setUpdateNumberVisible(true)}
+                  >
+                    Update Number
+                  </Button>
+                )}
+          
+                {/* Update Amount section */}
+                {updateAmountVisible ? (
+                  <div>
+                    <TextField
+                      label="New Bet Amount"
+                      variant="outlined"
+                      fullWidth
+                      value={newBetAmount}
+                      onChange={(e) => setNewBetAmount(e.target.value)}
+                      margin="dense"
+                      type="number"
+                    />
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={updateBetAmount}
+                    >
+                      Update Amount
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => setUpdateAmountVisible(true)}
+                  >
+                    Update Amount
+                  </Button>
+                )}
+          
+               
+              </div>
               ) : (
                 <div>
                   <DialogContentText>No Bet Placed Yet</DialogContentText>
@@ -93,7 +189,7 @@ function OtherGamesModal({ open, handleClose }) {
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={() => placeBet(betAmount, betNumber)}
+                      onClick={() => placeBets()}
                     >
                       Place Bet
                     </Button>

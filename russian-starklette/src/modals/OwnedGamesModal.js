@@ -100,7 +100,7 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
     setBetNumber(betStatus.current_number);
   }
   const currentContract = await gameHandler;
-  await getBalance(provider, currentContract.address, account, setBalance);
+  await getBalance(provider, currentContract.address,account, setBalance);
   }
 
 

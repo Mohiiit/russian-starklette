@@ -241,7 +241,7 @@ mod RussianStarklette {
                 );
 
             self._distribute_prize_pool(@winners, owner_fees);
-            // update the game status, issue here.
+            self.game_status.write('ENDED');
             self
                 .emit(
                     GameEnded {

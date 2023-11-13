@@ -10,7 +10,7 @@ import {
 import { useAccount } from '../context/AccountContext';
 import { useGame } from '../context/ProviderContext';
 
-import { createGameFactoryContract } from '../utils';
+import { createGameFactoryContract, getBalance } from '../utils';
 function BalanceModal({ open, onClose }) {
     const {account, balance, setBalance} = useAccount();
   const {provider, gameHandler} = useGame();
@@ -19,9 +19,7 @@ function BalanceModal({ open, onClose }) {
 
   const getPlayerBalance = async () => {
     const current_Contract = await gameHandler;
-    const gameFactoryContract = await createGameFactoryContract(provider, current_Contract.address);
-    const response = await gameFactoryContract.get_player_balance(account.address);
-    setBalance(response?.toString());
+    await getBalance(provider, current_Contract.address, account, setBalance);
   };
 
   const handleUpdateBalance = async() => {
@@ -30,7 +28,8 @@ function BalanceModal({ open, onClose }) {
     } else {
         await increasePlayerBalance(newBalance);
     }
-    // await getPlayerBalance();
+    setNewBalance('');
+    await getPlayerBalance();
   };
   const increasePlayerBalance = async (amount) => {
     const current_Contract = await gameHandler;
