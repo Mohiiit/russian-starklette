@@ -42,9 +42,9 @@ function GameLists({ ownedGames, otherGames }) {
             
             <Grid container spacing={2} direction="column">
             {ownedGames.map((game) => (
-              <Grid item xs={12} key={game.contractAddress}>
+              <Grid item xs={12} key={game}>
                 <GameCard
-                  contractAddress={game.contractAddress}
+                  contractAddress={game}
                   ownership='self'
                 />
               </Grid>
@@ -70,9 +70,9 @@ function GameLists({ ownedGames, otherGames }) {
             
             <Grid container spacing={2} direction="row">
             {otherGames.map((game) => (
-              <Grid item xs={12} sm={6} md={6} key={game.contractAddress}>
+              <Grid item xs={12} sm={6} md={6} key={game}>
                 <GameCard
-                  contractAddress={game.contractAddress}
+                  contractAddress={game}
                   ownership='others'
                 />
               </Grid>

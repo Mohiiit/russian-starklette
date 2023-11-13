@@ -23,6 +23,8 @@ function GameFactoryButton({setOwnedGames}) {
       const res = await gameFactoryContract.new_game(myCall.calldata);
       const res2 = await provider.waitForTransaction(res.transaction_hash);
       console.log(res, res2);
+      console.log(res2.events[0].data[0], res2.events[0].data[0]);
+      setOwnedGames((prevState) => [...prevState, res2.events[0].data[0]])
       setIsCreating(false);
     } catch (error) {
       console.error('Error creating the contract:', error);

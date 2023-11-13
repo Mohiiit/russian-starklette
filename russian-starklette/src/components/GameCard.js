@@ -56,8 +56,8 @@ function GameCard({ contractAddress, ownership }) {
       </CardContent>
     </Card>
     </div>
-    <OwnedGameModal open={gameModalOpen} handleClose={handleGameModalClose} />
-      <OtherGamesModal open={otherGamesModalOpen} handleClose={handleOtherGamesModalClose} />
+    <OwnedGameModal open={gameModalOpen} handleClose={handleGameModalClose} contractAddress={contractAddress} />
+      <OtherGamesModal open={otherGamesModalOpen} handleClose={handleOtherGamesModalClose} contractAddress={contractAddress} />
     </div>
   );
 }

@@ -21,3 +21,16 @@ export async function createGameFactoryContract(provider, address) {
   
     return gameFactoryContract;
   }
+
+
+  export async function placeBet(provider, address, account, number, amount) {
+    const gameFactoryContract = await createGameFactoryContract(provider, address);
+    gameFactoryContract.connect(account);
+    const myCall = gameFactoryContract.populate("place_bet", [
+      account.address,
+      number, amount
+    ]);
+    const res = await gameFactoryContract.place_bet(...myCall.calldata);
+    const res2 = await provider.waitForTransaction(res.transaction_hash);
+    console.log(res, res2);
+  }

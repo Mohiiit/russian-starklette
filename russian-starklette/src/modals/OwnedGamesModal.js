@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Button,
   Dialog,
@@ -9,8 +9,13 @@ import {
   Typography,
   Box,
 } from '@mui/material';
+import { useGame } from '../context/ProviderContext';
+import { useAccount } from '../context/AccountContext';
+import { createGameFactoryContract, placeBet } from '../utils';
 
-function OwnedGameModal({ open, handleClose }) {
+function OwnedGameModal({ open, handleClose, contractAddress }) {
+  const { setGameProviderInstance , updateGameHandler, updateGameHandlerAddress, provider, gameHandler} = useGame();
+  const {account} = useAccount();
   const [gameStarted, setGameStarted] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
   const [betPlaced, setBetPlaced] = useState(false);
@@ -18,7 +23,11 @@ function OwnedGameModal({ open, handleClose }) {
   const [betNumber, setBetNumber] = useState(0);
   const [luckyNumber, setLuckyNumber] = useState(0);
 
-  const startGame = () => {
+  const startGame = async() => {
+    const gameFactoryContract = await createGameFactoryContract(provider, contractAddress);
+    gameFactoryContract.connect(account);
+    const response = await gameFactoryContract.start_game();
+    console.log(response);
     setGameStarted(true);
   };
 
@@ -28,11 +37,30 @@ function OwnedGameModal({ open, handleClose }) {
     setLuckyNumber(randomNumber);
   };
 
-  const placeBet = (amount, number) => {
-    setBetAmount(amount);
-    setBetNumber(number);
-    setBetPlaced(true);
+  const placeBets = async(amount, number) => {
+    await placeBet(provider, contractAddress, account, number, amount);
   };
+
+  async function preCheck() {
+    const gameFactoryContract = await createGameFactoryContract(provider, contractAddress);
+    const formatAnswer = { game_id: 'string', game_owner: 'string' , game_status: 'string', game_winning_number: 'string'};
+    const res = await gameFactoryContract.get_game({
+      parseRequest: true,
+      parseResponse: true,
+      formatResponse: formatAnswer,
+  });
+    console.log(res.game_status);
+    if (res.game_status == 'ONGOING') {
+      setGameStarted(true);
+    }
+  }
+
+
+  useEffect(() => {
+    if(open) {
+      preCheck();
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onClose={handleClose}>

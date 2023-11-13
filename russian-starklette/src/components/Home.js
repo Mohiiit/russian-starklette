@@ -72,20 +72,21 @@ const Home = () => {
     }
   };
 
-  async function getOneGame(address) {
+  async function getOneGame(address, updatedOwnedGames, updateOtherGames) {
     const gameFactoryContract = await createGameFactoryContract(provider, address);
     const response = await gameFactoryContract.get_game();
     const currentGameOwner = '0x' + response.game_owner.toString(16);
     console.log(currentGameOwner, account.address);
     if (currentGameOwner === account.address) {
-      // Check if address is not in ownedGames
-      if (!ownedGames.some(game => game.contractAddress === address)) {
-        setOwnedGames((prevOwnedGames) => [...prevOwnedGames, { contractAddress: address }]);
-      }
+      
+
+if (!updatedOwnedGames.includes(address)) {
+  updatedOwnedGames.push(address);
+}
+
     } else {
-      // Check if address is not in otherGames
-      if (!otherGames.some(game => game.contractAddress === address)) {
-        setOtherGames((prevOtherGames) => [...prevOtherGames, { contractAddress: address }]);
+      if (!updateOtherGames.includes(address)) {
+        updateOtherGames.push(address);
       }
     }
     console.log(response);
@@ -97,10 +98,13 @@ const Home = () => {
     const gameFactoryContract = await createGameFactoryContract(provider, current_Contract.address);
     const response = await gameFactoryContract.get_all_games();
     const result = decimalsToHexStrings(response);
+    let updatedOwnedGames = [...ownedGames];
+    let updateOtherGames = [...otherGames];
     for (const address of result) {
-      await getOneGame(address);
+      await getOneGame(address, updatedOwnedGames, updateOtherGames);
     }
-
+    setOwnedGames(updatedOwnedGames);
+    setOtherGames(updateOtherGames);
     setAllGames(result);
   }
 
