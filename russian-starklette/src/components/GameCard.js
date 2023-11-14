@@ -47,7 +47,7 @@ function GameCard({ contractAddress, ownership }) {
         <div onClick={handleCardClick}>
     <Card sx={cardStyles} variant="outlined">
       <CardContent>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="h7" gutterBottom>
           Contract Address:
         </Typography>
         <Typography variant="body2" color="textSecondary">
@@ -56,8 +56,8 @@ function GameCard({ contractAddress, ownership }) {
       </CardContent>
     </Card>
     </div>
-    <OwnedGameModal open={gameModalOpen} handleClose={handleGameModalClose} />
-      <OtherGamesModal open={otherGamesModalOpen} handleClose={handleOtherGamesModalClose} />
+    <OwnedGameModal open={gameModalOpen} handleClose={handleGameModalClose} contractAddress={contractAddress} />
+      <OtherGamesModal open={otherGamesModalOpen} handleClose={handleOtherGamesModalClose} contractAddress={contractAddress} />
     </div>
   );
 }

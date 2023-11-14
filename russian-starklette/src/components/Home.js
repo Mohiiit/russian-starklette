@@ -8,6 +8,7 @@ import {
   cairo,
   stark, hash
 } from "starknet";
+import { connect, disconnect } from "get-starknet"
 import AccountModal from '../modals/AccountModal';
 import BalanceModal from '../modals/BalanceModal';
 import FailureModal from '../modals/FailureModal';
@@ -16,16 +17,16 @@ import GameLists from './GameList';
 import GameList from './GameList';
 import Navbar from './Navbar';
 import BetForm from './PlaceBet';
+import { useTheme, useMediaQuery, Container } from '@mui/material';
+
 
 import { useGame } from '../context/ProviderContext';
-import { useAccount } from '../context/AccountContext';
 
 import GameFactoryButton from '../actions/CreateGameButton';
 import { createGameFactoryContract } from '../utils';
 
 const Home = () => {
-  const { setGameProviderInstance , updateGameHandler, updateGameHandlerAddress, provider, gameHandler} = useGame();
-  const {account} = useAccount();
+  const { account, setGameProviderInstance , updateGameHandler, updateGameHandlerAddress, provider, gameHandler} = useGame();
 
   const [allGames, setAllGames] = useState([]);
   const [ownedGames, setOwnedGames] = useState([]);
@@ -72,20 +73,21 @@ const Home = () => {
     }
   };
 
-  async function getOneGame(address) {
+  async function getOneGame(address, updatedOwnedGames, updateOtherGames) {
     const gameFactoryContract = await createGameFactoryContract(provider, address);
     const response = await gameFactoryContract.get_game();
     const currentGameOwner = '0x' + response.game_owner.toString(16);
-    console.log(currentGameOwner, account.address);
-    if (currentGameOwner === account.address) {
-      // Check if address is not in ownedGames
-      if (!ownedGames.some(game => game.contractAddress === address)) {
-        setOwnedGames((prevOwnedGames) => [...prevOwnedGames, { contractAddress: address }]);
-      }
+    // console.log(currentGameOwner, account.address);
+    if (currentGameOwner === account) {
+      
+
+if (!updatedOwnedGames.includes(address)) {
+  updatedOwnedGames.push(address);
+}
+
     } else {
-      // Check if address is not in otherGames
-      if (!otherGames.some(game => game.contractAddress === address)) {
-        setOtherGames((prevOtherGames) => [...prevOtherGames, { contractAddress: address }]);
+      if (!updateOtherGames.includes(address)) {
+        updateOtherGames.push(address);
       }
     }
     console.log(response);
@@ -96,11 +98,16 @@ const Home = () => {
     const current_Contract = await gameHandler;
     const gameFactoryContract = await createGameFactoryContract(provider, current_Contract.address);
     const response = await gameFactoryContract.get_all_games();
+    console.log(response);
     const result = decimalsToHexStrings(response);
+    let updatedOwnedGames = [...ownedGames];
+    let updateOtherGames = [...otherGames];
     for (const address of result) {
-      await getOneGame(address);
+      console.log('loop')
+      await getOneGame(address, updatedOwnedGames, updateOtherGames);
     }
-
+    setOwnedGames(updatedOwnedGames);
+    setOtherGames(updateOtherGames);
     setAllGames(result);
   }
 
@@ -114,11 +121,11 @@ const Home = () => {
 
 
   useEffect(() => {
-    if (provider && account) {
+    if (provider && account && gameHandler) {
       getAllGames();
     }
 
-  }, [provider, account])
+  }, [provider, account, gameHandler])
 
   // const ownedGames = [
   //   {
@@ -137,25 +144,28 @@ const Home = () => {
   // ];
 
   return (
-    <div>
-      <Navbar openAccountModal={handleOpenAccountModal} openBalanceModal={handleOpenBalanceModal}/>
+    <Container
+      sx={{
+        background: 'linear-gradient(to bottom, #20004f, #000000)',
+        minHeight: '100vh',
+        minWidth: '100%',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      <Navbar openAccountModal={handleOpenAccountModal} openBalanceModal={handleOpenBalanceModal} />
       <AccountModal open={openAccountModal} onClose={handleCloseAccountModal} />
       <BalanceModal open={openBalanceModal} onClose={handleCloseBalanceModal} />
 
-      <SuccessModal
-        open={openSuccessSnackbar}
-        message={successMessage}
-        onClose={() => handleCloseSnackbar('success')}
-      />
-      <FailureModal
-        open={openFailureSnackbar}
-        message={failureMessage}
-        onClose={() => handleCloseSnackbar('failure')}
-      />
-      <GameFactoryButton {...{setOwnedGames}}/>
+      <SuccessModal open={openSuccessSnackbar} message={successMessage} onClose={() => handleCloseSnackbar('success')} />
+      <FailureModal open={openFailureSnackbar} message={failureMessage} onClose={() => handleCloseSnackbar('failure')} />
+      <GameFactoryButton {...{ setOwnedGames }} />
 
-      <GameLists {...{ownedGames, otherGames}}/>
-    </div>
+      <GameLists {...{ ownedGames, otherGames }} />
+
+    </Container>
   );
 };
 

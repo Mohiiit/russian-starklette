@@ -1,84 +1,74 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Button,
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  TextField,
-  Slide,
-} from '@mui/material';
+  Typography,
+  Button,
+  Backdrop,
+} from '@mui/material';import { useGame } from '../context/ProviderContext';
 
-import { useAccount } from '../context/AccountContext';
-import { useGame } from '../context/ProviderContext';
+const styles = {
+  dialogContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '16px',
+  },
+  loader: {
+    margin: '8px',
+  },
+  button: {
+    marginTop: '16px',
+  },
+};
+
+
 
 function AccountModal({ open, onClose }) {
-  const [showAddAccountForm, setShowAddAccountForm] = useState(false);
-  const [accountAddress, setAccountAddress] = useState('');
-  const [privateKey, setPrivateKey] = useState('');
-  const [activeAccount, setActiveAccount] = useState(localStorage.getItem('address'));
 
-  const {account, setNewAccount} = useAccount();
-  const {provider} = useGame();
+  const {provider, connectWallet, disconnectWallet, setNewAccount, isConnected, account} = useGame();
+  
 
-  const handleAddAccount = () => {
-    setNewAccount(accountAddress, privateKey);
-  };
-
-  useEffect(() => {
-    const address = localStorage.getItem('address');
-    const key = localStorage.getItem('key');
-
-    if (address && key) {
-        setNewAccount(address, key);
-    }
-
-  }, [provider]);
-
-  return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Account Modal</DialogTitle>
-      <DialogContent>
-        <div>
-          <strong>Active Account:</strong> {activeAccount}
-        </div>
-        <Button
-          variant="outlined"
-          onClick={() => setShowAddAccountForm(!showAddAccountForm)}
-        >
-          Add New Account
-        </Button>
-        {showAddAccountForm && <Slide direction="up" in={showAddAccountForm}>
-          <div>
-            <TextField
-              label="Account Address"
-              variant="outlined"
-              fullWidth
-              value={accountAddress}
-              onChange={(e) => setAccountAddress(e.target.value)}
-            />
-            <TextField
-              label="Private Key"
-              variant="outlined"
-              fullWidth
-              value={privateKey}
-              onChange={(e) => setPrivateKey(e.target.value)}
-            />
+  return  (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      BackdropComponent={Backdrop}
+      BackdropProps={{ sx: { backdropFilter: 'blur(2px)', backgroundColor: 'rgba(0, 0, 0, 0.5)' } }}
+    >
+      {isConnected ? (
+        <>
+          <DialogTitle sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>Connected</DialogTitle>
+          <DialogContent sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>
+            <Typography variant="body1" gutterBottom>
+              <strong>Active Account:</strong> {account}
+            </Typography>
             <Button
               variant="contained"
-              color="primary"
-              onClick={handleAddAccount}
+              style={{ backgroundColor: '#FFA500', color: '#fff' }} // Darkish orange background
+              onClick={() => disconnectWallet()}
+              sx={{ marginTop: 2 }}
             >
-              Add New Account
+              Disconnect
             </Button>
-          </div>
-        </Slide>}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="primary">
-          Close
-        </Button>
-      </DialogActions>
+          </DialogContent>
+        </>
+      ) : (
+        <DialogContent sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom>
+            Choose a wallet
+          </Typography>
+          <Button
+            variant="contained"
+            style={{ backgroundColor: '#FFA500', color: '#fff' }} // Darkish orange background
+            onClick={() => connectWallet()}
+            sx={{ marginTop: 2 }}
+          >
+            Connect a Wallet
+          </Button>
+        </DialogContent>
+      )}
     </Dialog>
   );
 }
