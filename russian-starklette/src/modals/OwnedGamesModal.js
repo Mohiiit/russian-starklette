@@ -8,7 +8,7 @@ import {
   DialogTitle,
   Typography,
   Box,
-  TextField
+  TextField, Backdrop
 } from '@mui/material';
 import { useGame } from '../context/ProviderContext';
 import { createGameFactoryContract, getBalance, placeBet, updateAmount, updateNumber } from '../utils';
@@ -114,27 +114,28 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
   }, [open]);
 
   return (
-    <Dialog open={open} onClose={handleClose}>
-      <DialogTitle>Game Status</DialogTitle>
-      <DialogContent>
+    <Dialog open={open} onClose={handleClose} BackdropComponent={Backdrop}
+    BackdropProps={{ sx: { backdropFilter: 'blur(2px)', backgroundColor: 'rgba(0, 0, 0, 0.5)' } }}>
+      <DialogTitle  sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>Game Status</DialogTitle>
+      <DialogContent  sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>
         {gameStarted ? (
           <div>
             {gameEnded ? (
               <div>
-                <DialogContentText>Game Ended</DialogContentText>
+                <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Game Ended</DialogContentText>
                 <Typography variant="h6" gutterBottom>
                   Lucky Number: {luckyNumber}
                 </Typography>
-                <DialogContentText>Bet Amount: {betAmount} ETH</DialogContentText>
-                  <DialogContentText>Bet Number: {betNumber}</DialogContentText>
+                <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Bet Amount: {betAmount} ETH</DialogContentText>
+                  <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Bet Number: {betNumber}</DialogContentText>
               </div>
             ) : (
               <div>
                 {betPlaced ? (
                   <div>
-                  <DialogContentText>Bet Placed</DialogContentText>
-                  <DialogContentText>Bet Amount: {betAmount} ETH</DialogContentText>
-                  <DialogContentText>Bet Number: {betNumber}</DialogContentText>
+                  <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Bet Placed</DialogContentText>
+                  <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Bet Amount: {betAmount} ETH</DialogContentText>
+                  <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Bet Number: {betNumber}</DialogContentText>
             
                   {/* Update Number section */}
                   {updateNumberVisible ? (
@@ -147,10 +148,20 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
                         onChange={(e) => setNewBetNumber(e.target.value)}
                         margin="dense"
                         type="number"
+                        sx={{
+                          backgroundColor: '#222', // Dark background for TextField
+                          '& input': {
+                            color: '#fff', // White text for input
+                          },
+                          '& label': {
+                            color: '#888', // Grey color for label
+                          },
+                          marginTop: '5px'
+                        }}
                       />
                       <Button
                         variant="contained"
-                        color="primary"
+                        style={{ backgroundColor: '#FFA500', color: '#fff', marginBottom: '5px' }} 
                         onClick={updateBetNumber}
                       >
                         Update Number
@@ -159,7 +170,7 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
                   ) : (
                     <Button
                       variant="contained"
-                      color="primary"
+                      style={{ backgroundColor: '#FFA500', color: '#fff', marginBottom: '5px' }} 
                       onClick={() => setUpdateNumberVisible(true)}
                     >
                       Update Number
@@ -177,10 +188,20 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
                         onChange={(e) => setNewBetAmount(e.target.value)}
                         margin="dense"
                         type="number"
+                        sx={{
+                          backgroundColor: '#222', // Dark background for TextField
+                          '& input': {
+                            color: '#fff', // White text for input
+                          },
+                          '& label': {
+                            color: '#888', // Grey color for label
+                          },
+                          marginTop: '5px'
+                        }}
                       />
                       <Button
                         variant="contained"
-                        color="primary"
+                        style={{ backgroundColor: '#FFA500', color: '#fff', marginBottom: '5px' }} 
                         onClick={updateBetAmount}
                       >
                         Update Amount
@@ -189,7 +210,7 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
                   ) : (
                     <Button
                       variant="contained"
-                      color="primary"
+                      style={{ backgroundColor: '#FFA500', color: '#fff', marginBottom: '5px' }} 
                       onClick={() => setUpdateAmountVisible(true)}
                     >
                       Update Amount
@@ -200,7 +221,7 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
                   <DialogActions>
                     <Button
                       variant="contained"
-                      color="secondary"
+                      style={{ backgroundColor: '#FFA510', color: '#fff', marginBottom: '5px' }} 
                       onClick={endGame}
                     >
                       End Game
@@ -209,8 +230,8 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
                 </div>
                 ) : (
                   <div>
-      <DialogContentText>No Bet Placed Yet</DialogContentText>
-      <DialogContent>
+      <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>No Bet Placed Yet</DialogContentText>
+      <DialogContent  sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>
         <Typography>Current Balance: {balance}</Typography>
         <TextField
           label="Number"
@@ -219,6 +240,17 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
           value={number}
           onChange={(e) => setNumber(e.target.value)}
           margin="dense"
+          type="number"
+          sx={{
+            backgroundColor: '#222', // Dark background for TextField
+            '& input': {
+              color: '#fff', // White text for input
+            },
+            '& label': {
+              color: '#888', // Grey color for label
+            },
+            marginTop: '5px'
+          }}
         />
         <TextField
           label="Amount"
@@ -227,12 +259,23 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           margin="dense"
+          type="number"
+          sx={{
+            backgroundColor: '#222', // Dark background for TextField
+            '& input': {
+              color: '#fff', // White text for input
+            },
+            '& label': {
+              color: '#888', // Grey color for label
+            },
+            marginTop: '5px'
+          }}
         />
       </DialogContent>
-      <DialogActions>
+      <DialogActions  sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>
         <Button
           variant="contained"
-          color="primary"
+          style={{ backgroundColor: '#FFA500', color: '#fff', marginBottom: '5px' }} 
           onClick={placeBets}
           disabled={!number || !amount} // Disable the button if either input is empty
         >
@@ -246,9 +289,9 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
           </div>
         ) : (
           <div>
-            <DialogContentText>Game Not Started Yet</DialogContentText>
-            <DialogActions>
-              <Button variant="contained" color="primary" onClick={startGame}>
+            <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Game Not Started Yet</DialogContentText>
+            <DialogActions  sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>
+              <Button variant="contained" style={{ backgroundColor: '#FFA500', color: '#fff', marginBottom: '5px' }}  onClick={startGame}>
                 Start Game
               </Button>
             </DialogActions>

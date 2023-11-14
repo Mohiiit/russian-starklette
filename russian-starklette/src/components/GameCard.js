@@ -47,7 +47,7 @@ function GameCard({ contractAddress, ownership }) {
         <div onClick={handleCardClick}>
     <Card sx={cardStyles} variant="outlined">
       <CardContent>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="h7" gutterBottom>
           Contract Address:
         </Typography>
         <Typography variant="body2" color="textSecondary">

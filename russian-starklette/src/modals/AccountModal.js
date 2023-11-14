@@ -39,7 +39,7 @@ function AccountModal({ open, onClose }) {
     >
       {isConnected ? (
         <>
-          <DialogTitle>Connected</DialogTitle>
+          <DialogTitle sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>Connected</DialogTitle>
           <DialogContent sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>
             <Typography variant="body1" gutterBottom>
               <strong>Active Account:</strong> {account}
