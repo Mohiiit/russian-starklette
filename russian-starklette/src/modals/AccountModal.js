@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, Button, CircularProgress, Typography } from '@mui/material';
-import { useGame } from '../context/ProviderContext';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Typography,
+  Button,
+  Backdrop,
+} from '@mui/material';import { useGame } from '../context/ProviderContext';
 
 const styles = {
   dialogContent: {
@@ -25,34 +31,39 @@ function AccountModal({ open, onClose }) {
   
 
   return  (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      BackdropComponent={Backdrop}
+      BackdropProps={{ sx: { backdropFilter: 'blur(2px)', backgroundColor: 'rgba(0, 0, 0, 0.5)' } }}
+    >
       {isConnected ? (
         <>
           <DialogTitle>Connected</DialogTitle>
-          <DialogContent style={styles.dialogContent}>
+          <DialogContent sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>
             <Typography variant="body1" gutterBottom>
               <strong>Active Account:</strong> {account}
             </Typography>
             <Button
               variant="contained"
-              color="secondary"
+              style={{ backgroundColor: '#FFA500', color: '#fff' }} // Darkish orange background
               onClick={() => disconnectWallet()}
-              style={styles.loader}
+              sx={{ marginTop: 2 }}
             >
               Disconnect
             </Button>
           </DialogContent>
         </>
       ) : (
-        <DialogContent style={styles.dialogContent}>
+        <DialogContent sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>
           <Typography variant="h6" gutterBottom>
             Choose a wallet
           </Typography>
           <Button
             variant="contained"
-            color="primary"
+            style={{ backgroundColor: '#FFA500', color: '#fff' }} // Darkish orange background
             onClick={() => connectWallet()}
-            style={{ ...styles.loader, ...styles.button }}
+            sx={{ marginTop: 2 }}
           >
             Connect a Wallet
           </Button>

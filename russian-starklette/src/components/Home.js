@@ -17,6 +17,8 @@ import GameLists from './GameList';
 import GameList from './GameList';
 import Navbar from './Navbar';
 import BetForm from './PlaceBet';
+import { useTheme, useMediaQuery, Container } from '@mui/material';
+
 
 import { useGame } from '../context/ProviderContext';
 
@@ -142,25 +144,28 @@ if (!updatedOwnedGames.includes(address)) {
   // ];
 
   return (
-    <div>
-      <Navbar openAccountModal={handleOpenAccountModal} openBalanceModal={handleOpenBalanceModal}/>
+    <Container
+      sx={{
+        background: 'linear-gradient(to bottom, #20004f, #000000)',
+        minHeight: '100vh',
+        minWidth: '100%',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      <Navbar openAccountModal={handleOpenAccountModal} openBalanceModal={handleOpenBalanceModal} />
       <AccountModal open={openAccountModal} onClose={handleCloseAccountModal} />
       <BalanceModal open={openBalanceModal} onClose={handleCloseBalanceModal} />
 
-      <SuccessModal
-        open={openSuccessSnackbar}
-        message={successMessage}
-        onClose={() => handleCloseSnackbar('success')}
-      />
-      <FailureModal
-        open={openFailureSnackbar}
-        message={failureMessage}
-        onClose={() => handleCloseSnackbar('failure')}
-      />
-      <GameFactoryButton {...{setOwnedGames}}/>
+      <SuccessModal open={openSuccessSnackbar} message={successMessage} onClose={() => handleCloseSnackbar('success')} />
+      <FailureModal open={openFailureSnackbar} message={failureMessage} onClose={() => handleCloseSnackbar('failure')} />
+      <GameFactoryButton {...{ setOwnedGames }} />
 
-      <GameLists {...{ownedGames, otherGames}}/>
-    </div>
+      <GameLists {...{ ownedGames, otherGames }} />
+
+    </Container>
   );
 };
 

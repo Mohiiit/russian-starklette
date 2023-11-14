@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { AppBar, Toolbar, Typography, IconButton, Button, Menu, MenuItem } from '@mui/material';
+import { AppBar, Toolbar, Typography, IconButton, Container } from '@mui/material';
 import { AccountBalance, AccountCircle } from '@mui/icons-material';
 
 
@@ -9,29 +9,37 @@ function Navbar({openAccountModal, openBalanceModal}) {
     
 
   return (
-    <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          Russian Starklette
-        </Typography>
-        <IconButton
-          color="inherit"
-          onClick={openBalanceModal}
-          aria-controls="account-menu"
-          aria-haspopup="true"
-        >
-          <AccountBalance />
-        </IconButton>
-        <IconButton
-          color="inherit"
-          onClick={() => openAccountModal()} // Open the modal when the account icon is clicked
-          aria-controls="account-menu"
-          aria-haspopup="true"
-        >
-          <AccountCircle />
-        </IconButton>
-        
-      </Toolbar>
+    <AppBar position="static"
+    elevation={0} // Remove shadow
+    sx={{
+      background: 'transparent',
+      borderBottom: '1px solid transparent', // Remove bottom border
+    }}>
+      <Container sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Toolbar>
+          <Typography variant="h6">Russian Starklette</Typography>
+        </Toolbar>
+        <Toolbar sx={{ marginLeft: 'auto' }}>
+          <IconButton
+            color="inherit"
+            onClick={openBalanceModal}
+            aria-controls="account-menu"
+            aria-haspopup="true"
+            sx={{ marginLeft: 1 }}
+          >
+            <AccountBalance />
+          </IconButton>
+          <IconButton
+            color="inherit"
+            onClick={openAccountModal}
+            aria-controls="account-menu"
+            aria-haspopup="true"
+            sx={{ marginLeft: 1 }}
+          >
+            <AccountCircle />
+          </IconButton>
+        </Toolbar>
+      </Container>
     </AppBar>
   );
 }

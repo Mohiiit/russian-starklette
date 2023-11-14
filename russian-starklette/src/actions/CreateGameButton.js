@@ -2,6 +2,8 @@ import React from 'react';
 import { Button, CircularProgress } from '@mui/material';
 import { useGame } from '../context/ProviderContext';
 import { createGameFactoryContract } from '../utils';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+
 
 function GameFactoryButton({setOwnedGames}) {
   const [isCreating, setIsCreating] = React.useState(false); // State to track contract creation progress
@@ -31,17 +33,23 @@ function GameFactoryButton({setOwnedGames}) {
   };
 
   return (
-    <div>
       <Button
         variant="contained"
-        color="primary"
+        style={{ backgroundColor: '#FFA500', color: '#fff' }}
         onClick={handleCreateContract}
         disabled={isCreating}
-        startIcon={isCreating ? <CircularProgress size={20} /> : null}
+        startIcon={isCreating ? <CircularProgress size={20} /> : <AddCircleOutlineIcon />}
+        sx={{
+          width: '90%', // Full width of the container
+          margin: '10px 10px', // Margin for spacing
+          padding: '12px', // Padding for better visual appearance
+          fontWeight: 'bold', // Bold font
+        }}
+        
       >
         {isCreating ? 'Creating New Game ...' : 'Create New Game'}
       </Button>
-    </div>
+
   );
 }
 
