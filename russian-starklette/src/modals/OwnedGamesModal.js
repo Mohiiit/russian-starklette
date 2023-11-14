@@ -76,9 +76,9 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
       formatResponse: formatGameStatus,
   });
     console.log(gameStatus);
-    if (gameStatus.game_status == 'ONGOING') {
+    if (gameStatus.game_status === 'ONGOING') {
       setGameStarted(true);
-    } else if(gameStatus.game_status == 'ENDED') {
+    } else if(gameStatus.game_status === 'ENDED') {
       setGameEnded(true);
       setLuckyNumber(gameStatus.game_winning_number);
     }
@@ -118,17 +118,17 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
     BackdropProps={{ sx: { backdropFilter: 'blur(2px)', backgroundColor: 'rgba(0, 0, 0, 0.5)' } }}>
       <DialogTitle  sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>Game Status</DialogTitle>
       <DialogContent  sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>
-        {gameStarted ? (
+        {!gameEnded ? (
           <div>
-            {gameEnded ? (
+            {!gameStarted ? (
               <div>
-                <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Game Ended</DialogContentText>
-                <Typography variant="h6" gutterBottom>
-                  Lucky Number: {luckyNumber}
-                </Typography>
-                <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Bet Amount: {betAmount} ETH</DialogContentText>
-                  <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Bet Number: {betNumber}</DialogContentText>
-              </div>
+              <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Game Not Started Yet</DialogContentText>
+              <DialogActions  sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>
+                <Button variant="contained" style={{ backgroundColor: '#FFA500', color: '#fff', marginBottom: '5px' }}  onClick={startGame}>
+                  Start Game
+                </Button>
+              </DialogActions>
+            </div>
             ) : (
               <div>
                 {betPlaced ? (
@@ -288,14 +288,15 @@ function OwnedGameModal({ open, handleClose, contractAddress }) {
             )}
           </div>
         ) : (
+          
           <div>
-            <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Game Not Started Yet</DialogContentText>
-            <DialogActions  sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center' }}>
-              <Button variant="contained" style={{ backgroundColor: '#FFA500', color: '#fff', marginBottom: '5px' }}  onClick={startGame}>
-                Start Game
-              </Button>
-            </DialogActions>
-          </div>
+          <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Game Ended</DialogContentText>
+          <Typography variant="h6" gutterBottom>
+            Lucky Number: {luckyNumber}
+          </Typography>
+          <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Bet Amount: {betAmount} ETH</DialogContentText>
+            <DialogContentText sx={{ backgroundColor: '#111', color: '#fff', textAlign: 'center', alignItems: 'center', justifyContent: 'center' }}>Bet Number: {betNumber}</DialogContentText>
+        </div>
         )}
       </DialogContent>
     </Dialog>
