@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, CircularProgress } from '@mui/material';
+import { Button, CircularProgress, Container } from '@mui/material';
 import { useGame } from '../context/ProviderContext';
 import { createGameFactoryContract } from '../utils';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -33,15 +33,16 @@ function GameFactoryButton({setOwnedGames}) {
   };
 
   return (
-      <Button
+      <Container>
+        <Button
         variant="contained"
         style={{ backgroundColor: '#FFA500', color: '#fff' }}
         onClick={handleCreateContract}
         disabled={isCreating}
         startIcon={isCreating ? <CircularProgress size={20} /> : <AddCircleOutlineIcon />}
         sx={{
-          width: '90%', // Full width of the container
-          margin: '10px 10px', // Margin for spacing
+          width: '100%', // Full width of the container
+          margin: '10px 0px', // Margin for spacing
           padding: '12px', // Padding for better visual appearance
           fontWeight: 'bold', // Bold font
         }}
@@ -49,6 +50,7 @@ function GameFactoryButton({setOwnedGames}) {
       >
         {isCreating ? 'Creating New Game ...' : 'Create New Game'}
       </Button>
+      </Container>
 
   );
 }
